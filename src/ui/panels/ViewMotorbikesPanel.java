@@ -48,16 +48,26 @@ public class ViewMotorbikesPanel extends JPanel {
         JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         filterBar.setBackground(UIStyles.BACKGROUND);
 
+        JLabel lblSearch = new JLabel("Tên xe:");
+        lblSearch.setFont(UIStyles.FONT_LABEL);
+        lblSearch.setForeground(UIStyles.TEXT_MUTED);
+
         txtSearch = UIStyles.createTextField();
         txtSearch.setPreferredSize(new Dimension(200, 40));
-        
+
+        JLabel lblPrice = new JLabel("Giá tối đa:");
+        lblPrice.setFont(UIStyles.FONT_LABEL);
+        lblPrice.setForeground(UIStyles.TEXT_MUTED);
+
         txtMaxPrice = UIStyles.createTextField();
         txtMaxPrice.setPreferredSize(new Dimension(150, 40));
-        
+
         UIStyles.ModernButton btnSearch = new UIStyles.ModernButton("Tìm kiếm");
         btnSearch.setPreferredSize(new Dimension(100, 40));
 
+        filterBar.add(lblSearch);
         filterBar.add(txtSearch);
+        filterBar.add(lblPrice);
         filterBar.add(txtMaxPrice);
         filterBar.add(btnSearch);
 

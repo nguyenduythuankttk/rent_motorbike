@@ -44,12 +44,17 @@ public class ManageMotorbikesPanel extends JPanel {
         JPanel searchBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         searchBar.setBackground(UIStyles.BACKGROUND);
 
+        JLabel lblSearch = new JLabel("Tên / Biển số:");
+        lblSearch.setFont(UIStyles.FONT_LABEL);
+        lblSearch.setForeground(UIStyles.TEXT_MUTED);
+
         txtSearch = UIStyles.createTextField();
         txtSearch.setPreferredSize(new Dimension(250, 40));
 
         UIStyles.ModernButton btnSearch = new UIStyles.ModernButton("Tìm kiếm");
         btnSearch.setPreferredSize(new Dimension(100, 40));
 
+        searchBar.add(lblSearch);
         searchBar.add(txtSearch);
         searchBar.add(btnSearch);
 
@@ -79,6 +84,12 @@ public class ManageMotorbikesPanel extends JPanel {
         UIStyles.ModernButton btnAdd = new UIStyles.ModernButton("＋ Thêm xe");
         btnAdd.setPreferredSize(new Dimension(130, 40));
 
+        UIStyles.ModernButton btnEdit = new UIStyles.ModernButton("✎ Sửa xe");
+        btnEdit.setPreferredSize(new Dimension(110, 40));
+
+        UIStyles.ModernButton btnDelete = new UIStyles.ModernButton("✖ Xoá xe");
+        btnDelete.setPreferredSize(new Dimension(110, 40));
+
         UIStyles.ModernButton btnRefresh = new UIStyles.ModernButton("↻ Làm mới");
         btnRefresh.setPreferredSize(new Dimension(130, 40));
 
@@ -87,6 +98,8 @@ public class ManageMotorbikesPanel extends JPanel {
         lblCount.setForeground(UIStyles.TEXT_MUTED);
 
         toolbar.add(btnAdd);
+        toolbar.add(btnEdit);
+        toolbar.add(btnDelete);
         toolbar.add(btnRefresh);
         toolbar.add(Box.createHorizontalStrut(20));
         toolbar.add(lblCount);
@@ -194,6 +207,47 @@ public class ManageMotorbikesPanel extends JPanel {
             dlg.setVisible(true);
             if (dlg.isSaved())
                 loadData(dao.getAll());
+        });
+
+        btnEdit.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn xe muốn sửa!", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            Motorbike m = dao.getById((int) model.getValueAt(row, 0));
+            if (m != null) {
+                MotorbikeDialog dlg = new MotorbikeDialog(SwingUtilities.getWindowAncestor(this), m);
+                dlg.setVisible(true);
+                if (dlg.isSaved()) loadData(dao.getAll());
+            }
+        });
+
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn xe muốn xoá!", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            int id = (int) model.getValueAt(row, 0);
+            String status = (String) model.getValueAt(row, 5);
+            if (!"Sẵn sàng".equals(status)) {
+                JOptionPane.showMessageDialog(this,
+                        "Không thể xoá xe đang ở trạng thái \"" + status + "\".\nChỉ xoá được xe ở trạng thái Sẵn sàng.",
+                        "Không thể xoá", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            String name = model.getValueAt(row, 2) + " (" + model.getValueAt(row, 1) + ")";
+            int confirm = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc muốn xoá xe:\n  " + name + "?\nHành động này không thể hoàn tác!",
+                    "Xác nhận xoá", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (confirm != JOptionPane.YES_OPTION) return;
+            if (dao.delete(id)) {
+                loadData(dao.getAll());
+                JOptionPane.showMessageDialog(this, "Đã xoá xe thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Xoá xe thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         // Double-click → sửa

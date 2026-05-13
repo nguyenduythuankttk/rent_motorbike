@@ -12,6 +12,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.sql.Date;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +81,18 @@ public class RentalHistoryPanel extends JPanel {
                 table.getColumnModel().getColumn(i).setMaxWidth(0);
             }
         }
+
+        // Renderer cột ngày (dd/MM/yyyy)
+        DefaultTableCellRenderer dateRenderer = new DefaultTableCellRenderer() {
+            private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+                if (v instanceof Date) v = sdf.format((Date) v);
+                return super.getTableCellRendererComponent(t, v, sel, foc, r, c);
+            }
+        };
+        table.getColumnModel().getColumn(3).setCellRenderer(dateRenderer);
+        table.getColumnModel().getColumn(4).setCellRenderer(dateRenderer);
 
         // Màu cột Trạng thái
         table.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {

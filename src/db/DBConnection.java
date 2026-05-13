@@ -6,7 +6,7 @@ import java.sql.DriverManager;
 public class DBConnection {
     private static final String URL  = "jdbc:mysql://localhost:3306/java_motor_db";
     private static final String USER = "root";
-    private static final String PASS = "luongthanhnhat23";
+    private static final String PASS = "19082173";
 
     public static Connection getConnection() {
         try {

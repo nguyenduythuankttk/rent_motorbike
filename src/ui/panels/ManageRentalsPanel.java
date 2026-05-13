@@ -13,6 +13,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Date;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -148,6 +149,18 @@ public class ManageRentalsPanel extends JPanel {
                 table.getColumnModel().getColumn(i).setMaxWidth(0);
             }
         }
+
+        // Renderer cột ngày (dd/MM/yyyy)
+        DefaultTableCellRenderer dateRenderer = new DefaultTableCellRenderer() {
+            private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
+                if (v instanceof Date) v = sdf.format((Date) v);
+                return super.getTableCellRendererComponent(t, v, sel, foc, r, c);
+            }
+        };
+        table.getColumnModel().getColumn(4).setCellRenderer(dateRenderer);
+        table.getColumnModel().getColumn(5).setCellRenderer(dateRenderer);
 
         // Renderer cột Trạng thái
         table.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
@@ -381,8 +394,14 @@ public class ManageRentalsPanel extends JPanel {
         if (row < 0)
             return;
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
         String status = (String) tableModel.getValueAt(row, 7);
         String icon = ST_PAID.equals(status) ? "✔" : ST_CANCEL.equals(status) ? "✖" : "⏳";
+
+        Object d4 = tableModel.getValueAt(row, 4);
+        Object d5 = tableModel.getValueAt(row, 5);
+        String rentStr   = (d4 instanceof Date) ? sdf.format((Date) d4) : String.valueOf(d4);
+        String returnStr = (d5 instanceof Date) ? sdf.format((Date) d5) : String.valueOf(d5);
 
         String msg = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
                 "  Đơn thuê #" + tableModel.getValueAt(row, 0) + "\n" +
@@ -390,8 +409,8 @@ public class ManageRentalsPanel extends JPanel {
                 "  Khách    : " + tableModel.getValueAt(row, 1) + "\n" +
                 "  Xe       : " + tableModel.getValueAt(row, 2) + "\n" +
                 "  Biển số  : " + tableModel.getValueAt(row, 3) + "\n" +
-                "  Ngày nhận: " + tableModel.getValueAt(row, 4) + "\n" +
-                "  Ngày trả : " + tableModel.getValueAt(row, 5) + "\n" +
+                "  Ngày nhận: " + rentStr + "\n" +
+                "  Ngày trả : " + returnStr + "\n" +
                 "  Tổng tiền: " + tableModel.getValueAt(row, 6) + "\n" +
                 "  Trạng thái: " + icon + " " + status + "\n" +
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";

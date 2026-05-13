@@ -3,6 +3,7 @@ package ui;
 import session.Session;
 import ui.panels.ManageMotorbikesPanel;
 import ui.panels.ManageRentalsPanel;
+import ui.panels.ManageUsersPanel;
 import ui.panels.StatisticsPanel;
 
 import javax.swing.*;
@@ -17,6 +18,7 @@ public class AdminDashboard extends JFrame {
 
     private ManageMotorbikesPanel motorbikesPanel;
     private ManageRentalsPanel rentalsPanel;
+    private ManageUsersPanel usersPanel;
     private StatisticsPanel statsPanel;
 
     public AdminDashboard() {
@@ -46,12 +48,15 @@ public class AdminDashboard extends JFrame {
 
         UIStyles.SidebarButton btnMotorbikes = new UIStyles.SidebarButton("🏍  Quản lý Xe");
         UIStyles.SidebarButton btnRentals = new UIStyles.SidebarButton("📋  Quản lý Thuê");
+        UIStyles.SidebarButton btnUsers = new UIStyles.SidebarButton("👤  Quản lý NĐ");
         UIStyles.SidebarButton btnStats = new UIStyles.SidebarButton("📊  Thống kê");
 
         sidebar.add(lblLogo);
         sidebar.add(btnMotorbikes);
         sidebar.add(Box.createVerticalStrut(5));
         sidebar.add(btnRentals);
+        sidebar.add(Box.createVerticalStrut(5));
+        sidebar.add(btnUsers);
         sidebar.add(Box.createVerticalStrut(5));
         sidebar.add(btnStats);
         sidebar.add(Box.createVerticalGlue());
@@ -88,10 +93,12 @@ public class AdminDashboard extends JFrame {
 
         motorbikesPanel = new ManageMotorbikesPanel();
         rentalsPanel = new ManageRentalsPanel();
+        usersPanel = new ManageUsersPanel();
         statsPanel = new StatisticsPanel();
 
         contentPanel.add(motorbikesPanel, "MOTORBIKES");
         contentPanel.add(rentalsPanel, "RENTALS");
+        contentPanel.add(usersPanel, "USERS");
         contentPanel.add(statsPanel, "STATS");
 
         add(sidebar, BorderLayout.WEST);
@@ -105,6 +112,10 @@ public class AdminDashboard extends JFrame {
         btnRentals.addActionListener(e -> {
             rentalsPanel.loadData();
             setActive(btnRentals, "RENTALS");
+        });
+        btnUsers.addActionListener(e -> {
+            usersPanel.loadData();
+            setActive(btnUsers, "USERS");
         });
         btnStats.addActionListener(e -> {
             statsPanel.loadStats();
