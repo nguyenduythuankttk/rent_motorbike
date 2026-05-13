@@ -21,15 +21,15 @@ public class RentalHistoryPanel extends JPanel {
 
     private static final Color C_PRIMARY = new Color(44, 62, 80);
     private static final Color C_SUCCESS = new Color(39, 174, 96);
-    private static final Color C_DANGER  = new Color(231, 76, 60);
-    private static final Color C_WARN    = new Color(230, 126, 34);
+    private static final Color C_DANGER = new Color(231, 76, 60);
+    private static final Color C_WARN = new Color(230, 126, 34);
 
     private JTable table;
     private DefaultTableModel model;
     private List<Rental> currentData = new ArrayList<>();
 
-    private final RentalDAO    rentalDAO = new RentalDAO();
-    private final MotorbikeDAO motorDAO  = new MotorbikeDAO();
+    private final RentalDAO rentalDAO = new RentalDAO();
+    private final MotorbikeDAO motorDAO = new MotorbikeDAO();
 
     public RentalHistoryPanel() {
         setLayout(new BorderLayout(0, 10));
@@ -44,21 +44,24 @@ public class RentalHistoryPanel extends JPanel {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Color.WHITE);
         header.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 221, 225)),
-            new EmptyBorder(12, 16, 12, 16)));
+                BorderFactory.createLineBorder(new Color(220, 221, 225)),
+                new EmptyBorder(12, 16, 12, 16)));
 
         JLabel title = new JLabel("Lịch Sử Thuê Xe Của Bạn");
         title.setFont(new Font("Segoe UI", Font.BOLD, 18));
         title.setForeground(C_PRIMARY);
 
         JButton btnRefresh = smallBtn("Làm mới", new Color(52, 152, 219), Color.WHITE, 100);
-        header.add(title,      BorderLayout.WEST);
+        header.add(title, BorderLayout.WEST);
         header.add(btnRefresh, BorderLayout.EAST);
 
         // ----- Bảng (cột ẩn index 7 = motorbike_id) -----
-        String[] cols = {"ID", "Xe", "Biển số", "Ngày nhận", "Ngày trả", "Tổng tiền", "Trạng thái", "bike_id"};
+        String[] cols = { "ID", "Xe", "Biển số", "Ngày nhận", "Ngày trả", "Tổng tiền", "Trạng thái", "bike_id" };
         model = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -69,7 +72,7 @@ public class RentalHistoryPanel extends JPanel {
         table.setSelectionBackground(new Color(213, 232, 252));
         table.setGridColor(new Color(220, 221, 225));
 
-        int[] widths = {40, 140, 100, 95, 95, 130, 120, 0};
+        int[] widths = { 40, 140, 100, 95, 95, 130, 120, 0 };
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
             if (widths[i] == 0) {
@@ -85,10 +88,17 @@ public class RentalHistoryPanel extends JPanel {
                 super.getTableCellRendererComponent(t, v, sel, foc, r, c);
                 String s = v != null ? v.toString() : "";
                 switch (s) {
-                    case "Đã thanh toán": setForeground(C_SUCCESS); break;
-                    case "Chờ xử lý":    setForeground(C_WARN);    break;
-                    case "Đã hủy":       setForeground(C_DANGER);  break;
-                    default:             setForeground(Color.BLACK);
+                    case "Đã thanh toán":
+                        setForeground(C_SUCCESS);
+                        break;
+                    case "Chờ xử lý":
+                        setForeground(C_WARN);
+                        break;
+                    case "Đã hủy":
+                        setForeground(C_DANGER);
+                        break;
+                    default:
+                        setForeground(Color.BLACK);
                 }
                 setFont(getFont().deriveFont(Font.BOLD));
                 return this;
@@ -111,53 +121,57 @@ public class RentalHistoryPanel extends JPanel {
         btnPanel.add(btnCancel);
         btnPanel.add(hint);
 
-        add(header,   BorderLayout.NORTH);
-        add(scroll,   BorderLayout.CENTER);
+        add(header, BorderLayout.NORTH);
+        add(scroll, BorderLayout.CENTER);
         add(btnPanel, BorderLayout.SOUTH);
 
         btnRefresh.addActionListener(e -> loadData());
-        btnCancel.addActionListener(e  -> handleCancel());
+        btnCancel.addActionListener(e -> handleCancel());
     }
 
     private void handleCancel() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn đơn thuê muốn hủy!", "Chưa chọn", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui lòng chọn đơn thuê muốn hủy!", "Chưa chọn",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int    rentalId    = (int)    model.getValueAt(row, 0);
-        String status      = (String) model.getValueAt(row, 6);
-        Date   rentDate    = (Date)   model.getValueAt(row, 3);
-        int    motorbikeId = (int)    model.getValueAt(row, 7); // cột ẩn
+        int rentalId = (int) model.getValueAt(row, 0);
+        String status = (String) model.getValueAt(row, 6);
+        Date rentDate = (Date) model.getValueAt(row, 3);
+        int motorbikeId = (int) model.getValueAt(row, 7); // cột ẩn
 
         // Kiểm tra trạng thái
         if (!"Chờ xử lý".equals(status)) {
             JOptionPane.showMessageDialog(this,
-                "Không thể hủy đơn đang ở trạng thái \"" + status + "\".",
-                "Không thể hủy", JOptionPane.WARNING_MESSAGE);
+                    "Không thể hủy đơn đang ở trạng thái \"" + status + "\".",
+                    "Không thể hủy", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         // Kiểm tra ngày: chỉ hủy được nếu chưa đến ngày nhận
-        LocalDate today     = LocalDate.now();
+        LocalDate today = LocalDate.now();
         LocalDate rentLocal = rentDate.toLocalDate();
         if (!rentLocal.isAfter(today)) {
             JOptionPane.showMessageDialog(this,
-                "Không thể hủy — ngày nhận xe (" + rentDate + ") đã đến hoặc đã qua.\nVui lòng liên hệ admin để được hỗ trợ.",
-                "Không thể hủy", JOptionPane.WARNING_MESSAGE);
+                    "Không thể hủy — ngày nhận xe (" + rentDate
+                            + ") đã đến hoặc đã qua.\nVui lòng liên hệ admin để được hỗ trợ.",
+                    "Không thể hủy", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Bạn có chắc muốn hủy đơn thuê #" + rentalId + "?\n(Ngày nhận: " + rentDate + ")",
-            "Xác nhận hủy", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        if (confirm != JOptionPane.YES_OPTION) return;
+                "Bạn có chắc muốn hủy đơn thuê #" + rentalId + "?\n(Ngày nhận: " + rentDate + ")",
+                "Xác nhận hủy", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (confirm != JOptionPane.YES_OPTION)
+            return;
 
         if (rentalDAO.updateStatus(rentalId, "Đã hủy")) {
             motorDAO.updateStatus(motorbikeId, "Sẵn sàng");
             loadData();
-            JOptionPane.showMessageDialog(this, "Đã hủy đơn thuê thành công!", "Thành công", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Đã hủy đơn thuê thành công!", "Thành công",
+                    JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this, "Hủy đơn thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -168,15 +182,15 @@ public class RentalHistoryPanel extends JPanel {
         currentData = rentalDAO.getByUser(Session.getCurrentUser().getId());
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
         for (Rental r : currentData) {
-            model.addRow(new Object[]{
-                r.getId(),
-                r.getMotorbikeModel(),
-                r.getLicensePlate(),
-                r.getRentDate(),
-                r.getReturnDate(),
-                nf.format(r.getTotalPrice()) + " đ",
-                r.getStatus(),
-                r.getMotorbikeId()   // cột ẩn index 7
+            model.addRow(new Object[] {
+                    r.getId(),
+                    r.getMotorbikeModel(),
+                    r.getLicensePlate(),
+                    r.getRentDate(),
+                    r.getReturnDate(),
+                    nf.format(r.getTotalPrice()) + " đ",
+                    r.getStatus(),
+                    r.getMotorbikeId() // cột ẩn index 7
             });
         }
     }

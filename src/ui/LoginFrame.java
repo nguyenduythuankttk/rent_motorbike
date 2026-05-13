@@ -11,11 +11,6 @@ import java.awt.event.*;
 
 public class LoginFrame extends JFrame {
 
-    private static final Color C_PRIMARY  = new Color(44, 62, 80);
-    private static final Color C_ACCENT   = new Color(52, 152, 219);
-    private static final Color C_LIGHT    = new Color(236, 240, 241);
-    private static final Color C_MUTED    = new Color(127, 140, 141);
-
     private JTextField txtUsername;
     private JPasswordField txtPassword;
     private final UserDAO userDAO = new UserDAO();
@@ -23,108 +18,134 @@ public class LoginFrame extends JFrame {
     public LoginFrame() {
         setTitle("Đăng Nhập - Hệ Thống Thuê Xe Máy");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(460, 560);
+        setSize(1000, 650); // Larger size for modern split layout
         setLocationRelativeTo(null);
         setResizable(false);
         initUI();
     }
 
     private void initUI() {
-        // Nền gradient
-        JPanel bg = new JPanel() {
+        JPanel mainContainer = new JPanel(new BorderLayout());
+        mainContainer.setBackground(UIStyles.WHITE);
+
+        // --- Left Panel: Image/Branding ---
+        JPanel leftPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
+                Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g2.setPaint(new GradientPaint(0, 0, C_PRIMARY, 0, getHeight(), new Color(41, 128, 185)));
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Gradient Background
+                GradientPaint gp = new GradientPaint(0, 0, UIStyles.PRIMARY, getWidth(), getHeight(), new Color(99, 102, 241));
+                g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
+
+                // Overlay decoration
+                g2.setColor(new Color(255, 255, 255, 30));
+                g2.fillOval(-100, -100, 400, 400);
+                g2.fillOval(getWidth() - 200, getHeight() - 200, 400, 400);
+
+                g2.dispose();
             }
         };
-        bg.setLayout(new GridBagLayout());
+        leftPanel.setPreferredSize(new Dimension(500, 650));
+        leftPanel.setLayout(new GridBagLayout());
 
-        // Card trắng chính giữa
-        JPanel card = new JPanel(new GridBagLayout());
-        card.setBackground(Color.WHITE);
-        card.setBorder(new EmptyBorder(36, 44, 36, 44));
-        card.setPreferredSize(new Dimension(370, 480));
+        JLabel lblBrandIcon = new JLabel("🏍");
+        lblBrandIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 120));
+        lblBrandIcon.setForeground(UIStyles.WHITE);
+
+        JLabel lblBrandName = new JLabel("RENTAL MOTO", SwingConstants.CENTER);
+        lblBrandName.setFont(new Font("Segoe UI", Font.BOLD, 42));
+        lblBrandName.setForeground(UIStyles.WHITE);
+
+        JLabel lblBrandDesc = new JLabel("Trải nghiệm hành trình tuyệt vời cùng chúng tôi", SwingConstants.CENTER);
+        lblBrandDesc.setFont(new Font("Segoe UI", Font.PLAIN, 16));
+        lblBrandDesc.setForeground(new Color(224, 231, 255));
+
+        GridBagConstraints gbcL = new GridBagConstraints();
+        gbcL.gridx = 0; gbcL.gridy = 0; gbcL.insets = new Insets(0, 0, 20, 0);
+        leftPanel.add(lblBrandIcon, gbcL);
+        gbcL.gridy = 1; gbcL.insets = new Insets(0, 0, 10, 0);
+        leftPanel.add(lblBrandName, gbcL);
+        gbcL.gridy = 2;
+        leftPanel.add(lblBrandDesc, gbcL);
+
+        // --- Right Panel: Login Form ---
+        JPanel rightPanel = new JPanel(new GridBagLayout());
+        rightPanel.setBackground(UIStyles.WHITE);
+        rightPanel.setBorder(new EmptyBorder(0, 60, 0, 60));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0; gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.weightx = 1.0;
 
-        // --- Icon ---
-        JLabel lblIcon = new JLabel("🏍", SwingConstants.CENTER);
-        lblIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 50));
-        gbc.gridy = 0; gbc.insets = new Insets(0, 0, 6, 0);
-        card.add(lblIcon, gbc);
+        // Welcome Text
+        JLabel lblWelcome = new JLabel("Chào mừng trở lại!");
+        lblWelcome.setFont(UIStyles.FONT_TITLE);
+        lblWelcome.setForeground(UIStyles.SECONDARY);
+        gbc.gridy = 0; gbc.insets = new Insets(0, 0, 10, 0);
+        rightPanel.add(lblWelcome, gbc);
 
-        // --- Tiêu đề ---
-        JLabel lblTitle = new JLabel("THUÊ XE MÁY", SwingConstants.CENTER);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 22));
-        lblTitle.setForeground(C_PRIMARY);
-        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 4, 0);
-        card.add(lblTitle, gbc);
+        JLabel lblSub = new JLabel("Vui lòng nhập thông tin để tiếp tục");
+        lblSub.setFont(UIStyles.FONT_SUBTITLE);
+        lblSub.setForeground(UIStyles.TEXT_MUTED);
+        gbc.gridy = 1; gbc.insets = new Insets(0, 0, 40, 0);
+        rightPanel.add(lblSub, gbc);
 
-        JLabel lblSub = new JLabel("Đăng nhập vào tài khoản của bạn", SwingConstants.CENTER);
-        lblSub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblSub.setForeground(C_MUTED);
-        gbc.gridy = 2; gbc.insets = new Insets(0, 0, 24, 0);
-        card.add(lblSub, gbc);
-
-        // --- Label username ---
+        // Username
         JLabel lblUser = new JLabel("Tên đăng nhập");
-        lblUser.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblUser.setForeground(C_PRIMARY);
-        gbc.gridy = 3; gbc.insets = new Insets(0, 0, 4, 0);
-        card.add(lblUser, gbc);
+        lblUser.setFont(UIStyles.FONT_LABEL);
+        lblUser.setForeground(UIStyles.TEXT_MAIN);
+        gbc.gridy = 2; gbc.insets = new Insets(0, 0, 8, 0);
+        rightPanel.add(lblUser, gbc);
 
-        // --- Field username ---
-        txtUsername = new JTextField();
-        styleField(txtUsername);
-        gbc.gridy = 4; gbc.insets = new Insets(0, 0, 14, 0);
-        card.add(txtUsername, gbc);
+        txtUsername = UIStyles.createTextField();
+        gbc.gridy = 3; gbc.insets = new Insets(0, 0, 20, 0);
+        rightPanel.add(txtUsername, gbc);
 
-        // --- Label password ---
+        // Password
         JLabel lblPass = new JLabel("Mật khẩu");
-        lblPass.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lblPass.setForeground(C_PRIMARY);
-        gbc.gridy = 5; gbc.insets = new Insets(0, 0, 4, 0);
-        card.add(lblPass, gbc);
+        lblPass.setFont(UIStyles.FONT_LABEL);
+        lblPass.setForeground(UIStyles.TEXT_MAIN);
+        gbc.gridy = 4; gbc.insets = new Insets(0, 0, 8, 0);
+        rightPanel.add(lblPass, gbc);
 
-        // --- Field password ---
-        txtPassword = new JPasswordField();
-        styleField(txtPassword);
+        txtPassword = UIStyles.createPasswordField();
+        gbc.gridy = 5; gbc.insets = new Insets(0, 0, 30, 0);
+        rightPanel.add(txtPassword, gbc);
+
+        // Login Button
+        UIStyles.ModernButton btnLogin = new UIStyles.ModernButton("Đăng nhập");
+        btnLogin.setPreferredSize(new Dimension(0, 48));
         gbc.gridy = 6; gbc.insets = new Insets(0, 0, 20, 0);
-        card.add(txtPassword, gbc);
+        rightPanel.add(btnLogin, gbc);
 
-        // --- Nút ĐĂNG NHẬP ---
-        JButton btnLogin = createBtn("ĐĂNG NHẬP", C_ACCENT, Color.WHITE);
-        gbc.gridy = 7; gbc.insets = new Insets(0, 0, 12, 0);
-        card.add(btnLogin, gbc);
-
-        // --- Dòng đăng ký ---
-        JPanel regRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 4, 0));
-        regRow.setBackground(Color.WHITE);
-        JLabel lblRegText = new JLabel("Chưa có tài khoản?");
-        lblRegText.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        lblRegText.setForeground(C_MUTED);
+        // Register Link
+        JPanel regPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        regPanel.setBackground(UIStyles.WHITE);
+        JLabel lblNoAcc = new JLabel("Chưa có tài khoản?");
+        lblNoAcc.setFont(UIStyles.FONT_SUBTITLE);
+        lblNoAcc.setForeground(UIStyles.TEXT_MUTED);
         JButton btnReg = new JButton("Đăng ký ngay");
-        btnReg.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnReg.setForeground(C_ACCENT);
-        btnReg.setBackground(Color.WHITE);
+        btnReg.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btnReg.setForeground(UIStyles.PRIMARY);
+        btnReg.setContentAreaFilled(false);
         btnReg.setBorderPainted(false);
-        btnReg.setOpaque(false);
-        btnReg.setFocusPainted(false);
-        btnReg.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        regRow.add(lblRegText);
-        regRow.add(btnReg);
-        gbc.gridy = 8; gbc.insets = new Insets(0, 0, 0, 0);
-        card.add(regRow, gbc);
+        btnReg.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        regPanel.add(lblNoAcc);
+        regPanel.add(btnReg);
+        gbc.gridy = 7;
+        rightPanel.add(regPanel, gbc);
 
-        bg.add(card);
-        setContentPane(bg);
+        mainContainer.add(leftPanel, BorderLayout.WEST);
+        mainContainer.add(rightPanel, BorderLayout.CENTER);
 
+        setContentPane(mainContainer);
+
+        // Actions
         btnLogin.addActionListener(e -> handleLogin());
         btnReg.addActionListener(e -> new RegisterDialog(this).setVisible(true));
         txtPassword.addKeyListener(new KeyAdapter() {
@@ -134,32 +155,11 @@ public class LoginFrame extends JFrame {
         });
     }
 
-    private void styleField(JTextField f) {
-        f.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(189, 195, 199)),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)));
-    }
-
-    private JButton createBtn(String text, Color bg, Color fg) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        b.setBackground(bg);
-        b.setForeground(fg);
-        b.setFocusPainted(false);
-        b.setBorderPainted(false);
-        b.setOpaque(true);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setPreferredSize(new Dimension(280, 44));
-        b.setMinimumSize(new Dimension(280, 44));
-        return b;
-    }
-
     private void handleLogin() {
         String user = txtUsername.getText().trim();
         String pass = new String(txtPassword.getPassword()).trim();
         if (user.isEmpty() || pass.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Thiếu thông tin", JOptionPane.WARNING_MESSAGE);
+            showToast("Vui lòng nhập đầy đủ thông tin!", JOptionPane.WARNING_MESSAGE);
             return;
         }
         User found = userDAO.login(user, pass);
@@ -169,7 +169,11 @@ public class LoginFrame extends JFrame {
             if ("Admin".equals(found.getRole())) new AdminDashboard().setVisible(true);
             else                                  new UserDashboard().setVisible(true);
         } else {
-            JOptionPane.showMessageDialog(this, "Tên đăng nhập hoặc mật khẩu không đúng!", "Đăng nhập thất bại", JOptionPane.ERROR_MESSAGE);
+            showToast("Tên đăng nhập hoặc mật khẩu không đúng!", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void showToast(String msg, int type) {
+        JOptionPane.showMessageDialog(this, msg, "Thông báo", type);
     }
 }

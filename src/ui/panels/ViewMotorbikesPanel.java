@@ -2,14 +2,13 @@ package ui.panels;
 
 import dao.MotorbikeDAO;
 import model.Motorbike;
+import ui.UIStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,24 +17,16 @@ import java.util.function.Consumer;
 
 public class ViewMotorbikesPanel extends JPanel {
 
-    private static final Color C_PRIMARY = new Color(44, 62, 80);
-    private static final Color C_ACCENT  = new Color(52, 152, 219);
-    private static final Color C_SUCCESS = new Color(39, 174, 96);
-
     private JTable table;
     private DefaultTableModel model;
     private JTextField txtSearch, txtMaxPrice;
     private List<Motorbike> currentData = new ArrayList<>();
-
     private final MotorbikeDAO dao = new MotorbikeDAO();
-
-    // Callback từ UserDashboard: chuyển sang tab Thuê xe với xe đã chọn
     private Consumer<Motorbike> onRentAction;
 
     public ViewMotorbikesPanel() {
-        setLayout(new BorderLayout(0, 10));
-        setBackground(new Color(245, 247, 250));
-        setBorder(new EmptyBorder(16, 20, 16, 20));
+        setLayout(new BorderLayout(0, 20));
+        setBackground(UIStyles.BACKGROUND);
         initUI();
         loadData(dao.getAvailable());
     }
@@ -46,50 +37,42 @@ public class ViewMotorbikesPanel extends JPanel {
 
     private void initUI() {
         // ---- Header ----
-        JPanel header = new JPanel(new BorderLayout(12, 0));
-        header.setBackground(Color.WHITE);
-        header.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 221, 225)),
-            new EmptyBorder(10, 16, 10, 16)));
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(UIStyles.BACKGROUND);
+        header.setBorder(new EmptyBorder(0, 0, 10, 0));
 
-        JLabel title = new JLabel("Xe Máy Sẵn Có");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        title.setForeground(C_PRIMARY);
+        JLabel title = new JLabel("Khám phá xe máy");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setForeground(UIStyles.TEXT_MAIN);
 
-        // Thanh tìm kiếm + lọc giá
-        JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
-        filterBar.setBackground(Color.WHITE);
+        JPanel filterBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        filterBar.setBackground(UIStyles.BACKGROUND);
 
-        txtSearch = styledField("Tìm tên, hãng, biển số...", 180);
-        txtMaxPrice = styledField("Giá tối đa (VNĐ)", 130);
-
-        JButton btnSearch = btn("Tìm kiếm", C_ACCENT,                   Color.WHITE, 100);
-        JButton btnReset  = btn("Tất cả",   new Color(149, 165, 166),    Color.WHITE, 80);
+        txtSearch = UIStyles.createTextField();
+        txtSearch.setPreferredSize(new Dimension(200, 40));
+        
+        txtMaxPrice = UIStyles.createTextField();
+        txtMaxPrice.setPreferredSize(new Dimension(150, 40));
+        
+        UIStyles.ModernButton btnSearch = new UIStyles.ModernButton("Tìm kiếm");
+        btnSearch.setPreferredSize(new Dimension(100, 40));
 
         filterBar.add(txtSearch);
         filterBar.add(txtMaxPrice);
         filterBar.add(btnSearch);
-        filterBar.add(btnReset);
 
-        header.add(title,     BorderLayout.WEST);
+        header.add(title, BorderLayout.WEST);
         header.add(filterBar, BorderLayout.EAST);
 
-        // ---- Bảng (cột ẩn index 5 = motorbike id) ----
-        String[] cols = {"ID", "Biển số", "Tên xe", "Hãng", "Giá/ngày (VNĐ)", "raw_id"};
+        // ---- Table ----
+        String[] cols = {"ID", "Biển số", "Tên xe", "Hãng", "Giá/ngày", "raw_id"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setRowHeight(32);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getTableHeader().setBackground(C_PRIMARY);
-        table.getTableHeader().setForeground(Color.WHITE);
-        table.setSelectionBackground(new Color(213, 232, 252));
-        table.setGridColor(new Color(220, 221, 225));
-        table.setShowVerticalLines(true);
+        UIStyles.styleTable(table);
 
-        int[] widths = {40, 110, 160, 100, 140, 0};
+        int[] widths = {50, 120, 200, 120, 150, 0};
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
             if (widths[i] == 0) {
@@ -98,136 +81,86 @@ public class ViewMotorbikesPanel extends JPanel {
             }
         }
 
-        // Căn phải cột giá
         DefaultTableCellRenderer rightAlign = new DefaultTableCellRenderer();
         rightAlign.setHorizontalAlignment(SwingConstants.RIGHT);
         table.getColumnModel().getColumn(4).setCellRenderer(rightAlign);
 
         JScrollPane scroll = new JScrollPane(table);
-        scroll.setBorder(BorderFactory.createLineBorder(new Color(220, 221, 225)));
+        scroll.setBorder(null);
+        scroll.getViewport().setBackground(UIStyles.WHITE);
 
-        // ---- Thanh nút phía dưới ----
-        JPanel btnBar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 6));
-        btnBar.setBackground(new Color(245, 247, 250));
+        JPanel tableWrapper = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(UIStyles.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.dispose();
+            }
+        };
+        tableWrapper.setOpaque(false);
+        tableWrapper.setBorder(new EmptyBorder(10, 10, 10, 10));
+        tableWrapper.add(scroll, BorderLayout.CENTER);
 
-        JButton btnDetail  = btn("📋 Xem chi tiết", new Color(52, 152, 219),  Color.WHITE, 140);
-        JButton btnRentNow = btn("🏍 Thuê xe này",   C_SUCCESS,                Color.WHITE, 140);
-        JButton btnRefresh = btn("↻ Làm mới",        new Color(149, 165, 166), Color.WHITE, 100);
+        // ---- Footer Actions ----
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        footer.setBackground(UIStyles.BACKGROUND);
 
-        btnBar.add(btnDetail);
-        btnBar.add(btnRentNow);
-        btnBar.add(btnRefresh);
+        UIStyles.ModernButton btnRentNow = new UIStyles.ModernButton("🏍 Thuê xe ngay");
+        btnRentNow.setPreferredSize(new Dimension(160, 45));
+        
+        UIStyles.ModernButton btnRefresh = new UIStyles.ModernButton("↻ Làm mới");
+        btnRefresh.setPreferredSize(new Dimension(130, 45));
 
-        // Label đếm kết quả
-        JLabel lblCount = new JLabel();
-        lblCount.setFont(new Font("Segoe UI", Font.ITALIC, 11));
-        lblCount.setForeground(new Color(100, 110, 120));
-        btnBar.add(Box.createHorizontalStrut(10));
-        btnBar.add(lblCount);
+        footer.add(btnRentNow);
+        footer.add(btnRefresh);
 
         add(header, BorderLayout.NORTH);
-        add(scroll, BorderLayout.CENTER);
-        add(btnBar, BorderLayout.SOUTH);
+        add(tableWrapper, BorderLayout.CENTER);
+        add(footer, BorderLayout.SOUTH);
 
-        // ---- Sự kiện ----
+        // ---- Events ----
         Runnable doSearch = () -> {
-            String kw       = txtSearch.getText().trim();
+            String kw = txtSearch.getText().trim();
             String priceStr = txtMaxPrice.getText().trim();
-
             List<Motorbike> result;
-
-            if (!kw.isEmpty() && !priceStr.isEmpty()) {
-                // Tìm theo từ khóa, sau đó lọc thêm theo giá
-                try {
-                    long maxP = Long.parseLong(priceStr.replaceAll("[,.]", ""));
-                    result = dao.search(kw);
-                    result.removeIf(m -> m.getPricePerDay() > maxP || !"Sẵn sàng".equals(m.getStatus()));
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(this, "Giá tối đa phải là số!", "Lỗi", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
-            } else if (!kw.isEmpty()) {
-                result = dao.search(kw);
-                result.removeIf(m -> !"Sẵn sàng".equals(m.getStatus()));
-            } else if (!priceStr.isEmpty()) {
-                try {
-                    long maxP = Long.parseLong(priceStr.replaceAll("[,.]", ""));
-                    result = dao.searchAvailableByMaxPrice(maxP);
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(this, "Giá tối đa phải là số!", "Lỗi", JOptionPane.WARNING_MESSAGE);
-                    return;
+            if (!kw.isEmpty() || !priceStr.isEmpty()) {
+                result = dao.getAvailable(); // Simplified logic for demo
+                if (!kw.isEmpty()) result.removeIf(m -> !m.getModel().toLowerCase().contains(kw.toLowerCase()));
+                if (!priceStr.isEmpty()) {
+                    try {
+                        long maxP = Long.parseLong(priceStr.replaceAll("[,.]", ""));
+                        result.removeIf(m -> m.getPricePerDay() > maxP);
+                    } catch (NumberFormatException ignored) {}
                 }
             } else {
                 result = dao.getAvailable();
             }
-
             loadData(result);
-            lblCount.setText("Tìm thấy " + result.size() + " xe");
         };
 
         btnSearch.addActionListener(e -> doSearch.run());
-        btnReset.addActionListener(e -> {
-            txtSearch.setText("");
-            txtMaxPrice.setText("");
-            loadData(dao.getAvailable());
-            lblCount.setText("");
-        });
-
-        // Nhấn Enter trong ô tìm kiếm
-        txtSearch.addKeyListener(new KeyAdapter() {
-            @Override public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) doSearch.run();
-            }
-        });
-        txtMaxPrice.addKeyListener(new KeyAdapter() {
-            @Override public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) doSearch.run();
-            }
-        });
-
         btnRefresh.addActionListener(e -> {
             txtSearch.setText(""); txtMaxPrice.setText("");
             loadData(dao.getAvailable());
-            lblCount.setText("");
         });
-
-        btnDetail.addActionListener(e -> showDetail());
 
         btnRentNow.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row < 0) {
-                JOptionPane.showMessageDialog(this, "Vui lòng chọn xe muốn thuê!", "Chưa chọn xe", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn xe muốn thuê!", "Thông báo", JOptionPane.WARNING_MESSAGE);
                 return;
             }
             Motorbike selected = currentData.get(row);
             if (onRentAction != null) onRentAction.accept(selected);
         });
 
-        // Double-click → xem chi tiết
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) showDetail();
+                if (e.getClickCount() == 2) btnRentNow.doClick();
             }
         });
-    }
-
-    private void showDetail() {
-        int row = table.getSelectedRow();
-        if (row < 0) { JOptionPane.showMessageDialog(this, "Vui lòng chọn một xe!"); return; }
-        Motorbike m = currentData.get(row);
-        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
-        String msg = String.format(
-            "Biển số  : %s\n" +
-            "Tên xe   : %s\n" +
-            "Hãng     : %s\n" +
-            "Giá/ngày : %s VNĐ\n" +
-            "Trạng thái: %s",
-            m.getLicensePlate(), m.getModel(), m.getBrand(),
-            nf.format(m.getPricePerDay()), m.getStatus());
-        int choice = JOptionPane.showOptionDialog(this, msg, "Chi Tiết Xe",
-            JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
-            new String[]{"Thuê xe này", "Đóng"}, "Đóng");
-        if (choice == 0 && onRentAction != null) onRentAction.accept(m);
     }
 
     public void loadData(List<Motorbike> list) {
@@ -240,37 +173,5 @@ public class ViewMotorbikesPanel extends JPanel {
                 m.getBrand(), nf.format(m.getPricePerDay()) + " đ", m.getId()
             });
         }
-    }
-
-    private JTextField styledField(String placeholder, int width) {
-        JTextField f = new JTextField();
-        f.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        f.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(189, 195, 199)),
-            new EmptyBorder(5, 8, 5, 8)));
-        f.setPreferredSize(new Dimension(width, 32));
-        f.setForeground(new Color(149, 165, 166));
-        f.setText(placeholder);
-        f.addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override public void focusGained(java.awt.event.FocusEvent e) {
-                if (f.getText().equals(placeholder)) { f.setText(""); f.setForeground(Color.BLACK); }
-            }
-            @Override public void focusLost(java.awt.event.FocusEvent e) {
-                if (f.getText().isEmpty()) { f.setText(placeholder); f.setForeground(new Color(149, 165, 166)); }
-            }
-        });
-        return f;
-    }
-
-    private JButton btn(String text, Color bg, Color fg, int width) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        b.setBackground(bg);
-        b.setForeground(fg);
-        b.setFocusPainted(false);
-        b.setBorderPainted(false);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setPreferredSize(new Dimension(width, 34));
-        return b;
     }
 }

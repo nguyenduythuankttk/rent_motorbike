@@ -11,143 +11,124 @@ import java.awt.*;
 
 public class AdminDashboard extends JFrame {
 
-    private static final Color C_PRIMARY  = new Color(44, 62, 80);
-    private static final Color C_SIDEBAR  = new Color(52, 73, 94);
-    private static final Color C_ACTIVE   = new Color(52, 152, 219);
-    private static final Color C_TEXT     = new Color(189, 195, 199);
-
     private CardLayout cardLayout;
     private JPanel contentPanel;
-    private JButton activeBtn;
+    private UIStyles.SidebarButton activeBtn;
 
     private ManageMotorbikesPanel motorbikesPanel;
-    private ManageRentalsPanel    rentalsPanel;
-    private StatisticsPanel       statsPanel;
+    private ManageRentalsPanel rentalsPanel;
+    private StatisticsPanel statsPanel;
 
     public AdminDashboard() {
         setTitle("Admin Dashboard - Hệ Thống Thuê Xe Máy");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1100, 680);
+        setSize(1200, 750);
         setLocationRelativeTo(null);
-        setMinimumSize(new Dimension(900, 600));
+        setMinimumSize(new Dimension(1000, 650));
         initUI();
     }
 
     private void initUI() {
         setLayout(new BorderLayout());
 
-        // ---- Top header ----
-        JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(C_PRIMARY);
-        header.setPreferredSize(new Dimension(0, 56));
-        header.setBorder(new EmptyBorder(0, 20, 0, 20));
-
-        JLabel lblLogo = new JLabel("🏍  Quản Lý Thuê Xe Máy");
-        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lblLogo.setForeground(Color.WHITE);
-
-        JPanel rightHeader = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
-        rightHeader.setBackground(C_PRIMARY);
-        String name = Session.getCurrentUser().getFullName();
-        JLabel lblUser = new JLabel("👤  " + name + "  |  Admin");
-        lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        lblUser.setForeground(C_TEXT);
-        JButton btnLogout = new JButton("Đăng xuất");
-        btnLogout.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnLogout.setBackground(new Color(231, 76, 60));
-        btnLogout.setForeground(Color.WHITE);
-        btnLogout.setFocusPainted(false);
-        btnLogout.setBorderPainted(false);
-        btnLogout.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        rightHeader.add(lblUser);
-        rightHeader.add(btnLogout);
-
-        header.add(lblLogo,    BorderLayout.WEST);
-        header.add(rightHeader,BorderLayout.EAST);
-
         // ---- Sidebar ----
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(C_SIDEBAR);
-        sidebar.setPreferredSize(new Dimension(210, 0));
-        sidebar.setBorder(new EmptyBorder(20, 0, 20, 0));
+        sidebar.setBackground(UIStyles.SECONDARY);
+        sidebar.setPreferredSize(new Dimension(250, 0));
+        sidebar.setBorder(new EmptyBorder(30, 0, 30, 0));
 
-        JLabel lblMenu = new JLabel("  MENU ĐIỀU HƯỚNG");
-        lblMenu.setFont(new Font("Segoe UI", Font.BOLD, 10));
-        lblMenu.setForeground(new Color(127, 140, 141));
-        lblMenu.setAlignmentX(LEFT_ALIGNMENT);
-        lblMenu.setBorder(new EmptyBorder(0, 16, 12, 0));
+        JLabel lblLogo = new JLabel("  RENTAL MOTO");
+        lblLogo.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        lblLogo.setForeground(UIStyles.WHITE);
+        lblLogo.setBorder(new EmptyBorder(0, 24, 40, 0));
+        lblLogo.setAlignmentX(LEFT_ALIGNMENT);
 
-        JButton btnMotorbikes = navBtn("🏍  Quản lý Xe",       "MOTORBIKES");
-        JButton btnRentals    = navBtn("📋  Quản lý Thuê",     "RENTALS");
-        JButton btnStats      = navBtn("📊  Thống kê",         "STATS");
+        UIStyles.SidebarButton btnMotorbikes = new UIStyles.SidebarButton("🏍  Quản lý Xe");
+        UIStyles.SidebarButton btnRentals = new UIStyles.SidebarButton("📋  Quản lý Thuê");
+        UIStyles.SidebarButton btnStats = new UIStyles.SidebarButton("📊  Thống kê");
 
-        sidebar.add(lblMenu);
+        sidebar.add(lblLogo);
         sidebar.add(btnMotorbikes);
-        sidebar.add(Box.createVerticalStrut(4));
+        sidebar.add(Box.createVerticalStrut(5));
         sidebar.add(btnRentals);
-        sidebar.add(Box.createVerticalStrut(4));
+        sidebar.add(Box.createVerticalStrut(5));
         sidebar.add(btnStats);
         sidebar.add(Box.createVerticalGlue());
 
-        // ---- Content (CardLayout) ----
-        cardLayout   = new CardLayout();
+        // Logout in sidebar bottom
+        UIStyles.SidebarButton btnLogout = new UIStyles.SidebarButton("🚪  Đăng xuất");
+        sidebar.add(btnLogout);
+
+        // ---- Header ----
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(UIStyles.WHITE);
+        header.setPreferredSize(new Dimension(0, 70));
+        header.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 0, 1, 0, UIStyles.BORDER),
+                new EmptyBorder(0, 30, 0, 30)));
+
+        JLabel lblTitle = new JLabel("Trang Quản Trị");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        lblTitle.setForeground(UIStyles.TEXT_MAIN);
+
+        String name = Session.getCurrentUser().getFullName();
+        JLabel lblUser = new JLabel("Xin chào, " + name + " (Admin)");
+        lblUser.setFont(UIStyles.FONT_SUBTITLE);
+        lblUser.setForeground(UIStyles.TEXT_MUTED);
+
+        header.add(lblTitle, BorderLayout.WEST);
+        header.add(lblUser, BorderLayout.EAST);
+
+        // ---- Content ----
+        cardLayout = new CardLayout();
         contentPanel = new JPanel(cardLayout);
+        contentPanel.setBackground(UIStyles.BACKGROUND);
+        contentPanel.setBorder(new EmptyBorder(30, 30, 30, 30));
 
         motorbikesPanel = new ManageMotorbikesPanel();
-        rentalsPanel    = new ManageRentalsPanel();
-        statsPanel      = new StatisticsPanel();
+        rentalsPanel = new ManageRentalsPanel();
+        statsPanel = new StatisticsPanel();
 
         contentPanel.add(motorbikesPanel, "MOTORBIKES");
-        contentPanel.add(rentalsPanel,    "RENTALS");
-        contentPanel.add(statsPanel,      "STATS");
+        contentPanel.add(rentalsPanel, "RENTALS");
+        contentPanel.add(statsPanel, "STATS");
 
-        add(header,       BorderLayout.NORTH);
-        add(sidebar,      BorderLayout.WEST);
-        add(contentPanel, BorderLayout.CENTER);
+        add(sidebar, BorderLayout.WEST);
+        JPanel mainArea = new JPanel(new BorderLayout());
+        mainArea.add(header, BorderLayout.NORTH);
+        mainArea.add(contentPanel, BorderLayout.CENTER);
+        add(mainArea, BorderLayout.CENTER);
 
-        // Default active
-        setActive(btnMotorbikes, "MOTORBIKES");
-
-        // Nav actions
+        // Actions
         btnMotorbikes.addActionListener(e -> setActive(btnMotorbikes, "MOTORBIKES"));
-        btnRentals.addActionListener(e    -> { rentalsPanel.loadData(); setActive(btnRentals, "RENTALS"); });
-        btnStats.addActionListener(e      -> { statsPanel.loadStats(); setActive(btnStats, "STATS"); });
+        btnRentals.addActionListener(e -> {
+            rentalsPanel.loadData();
+            setActive(btnRentals, "RENTALS");
+        });
+        btnStats.addActionListener(e -> {
+            statsPanel.loadStats();
+            setActive(btnStats, "STATS");
+        });
 
         btnLogout.addActionListener(e -> {
-            int c = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn đăng xuất?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+            int c = JOptionPane.showConfirmDialog(this, "Bạn có chắc muốn đăng xuất?", "Xác nhận",
+                    JOptionPane.YES_NO_OPTION);
             if (c == JOptionPane.YES_OPTION) {
                 Session.logout();
                 dispose();
                 new LoginFrame().setVisible(true);
             }
         });
+
+        // Default active
+        setActive(btnMotorbikes, "MOTORBIKES");
     }
 
-    private JButton navBtn(String text, String card) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        b.setForeground(C_TEXT);
-        b.setBackground(C_SIDEBAR);
-        b.setFocusPainted(false);
-        b.setBorderPainted(false);
-        b.setHorizontalAlignment(SwingConstants.LEFT);
-        b.setBorder(new EmptyBorder(12, 20, 12, 20));
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
-        b.setAlignmentX(LEFT_ALIGNMENT);
-        return b;
-    }
-
-    private void setActive(JButton btn, String card) {
-        if (activeBtn != null) {
-            activeBtn.setBackground(C_SIDEBAR);
-            activeBtn.setForeground(C_TEXT);
-            activeBtn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        }
-        btn.setBackground(C_ACTIVE);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+    private void setActive(UIStyles.SidebarButton btn, String card) {
+        if (activeBtn != null)
+            activeBtn.setActive(false);
+        btn.setActive(true);
         activeBtn = btn;
         cardLayout.show(contentPanel, card);
     }

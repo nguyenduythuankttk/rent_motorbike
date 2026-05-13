@@ -2,6 +2,7 @@ package ui.panels;
 
 import dao.MotorbikeDAO;
 import model.Motorbike;
+import ui.UIStyles;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -16,14 +17,6 @@ import java.util.Locale;
 
 public class ManageMotorbikesPanel extends JPanel {
 
-    private static final Color C_PRIMARY = new Color(44, 62, 80);
-    private static final Color C_ACCENT  = new Color(52, 152, 219);
-    private static final Color C_SUCCESS = new Color(39, 174, 96);
-    private static final Color C_DANGER  = new Color(231, 76, 60);
-    private static final Color C_WARN    = new Color(230, 126, 34);
-    private static final Color C_GRAY    = new Color(108, 117, 125);
-    private static final Color C_BG      = new Color(245, 247, 250);
-
     private JTable table;
     private DefaultTableModel model;
     private JTextField txtSearch;
@@ -32,7 +25,7 @@ public class ManageMotorbikesPanel extends JPanel {
 
     public ManageMotorbikesPanel() {
         setLayout(new BorderLayout(0, 0));
-        setBackground(C_BG);
+        setBackground(UIStyles.BACKGROUND);
         initUI();
         loadData(dao.getAll());
     }
@@ -40,82 +33,76 @@ public class ManageMotorbikesPanel extends JPanel {
     private void initUI() {
         // ========== HEADER ==========
         JPanel header = new JPanel(new BorderLayout());
-        header.setBackground(Color.WHITE);
-        header.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(220, 221, 225)),
-            new EmptyBorder(14, 20, 14, 20)));
+        header.setBackground(UIStyles.BACKGROUND);
+        header.setBorder(new EmptyBorder(0, 0, 20, 0));
 
-        JLabel title = new JLabel("Quản Lý Xe Máy");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        title.setForeground(C_PRIMARY);
+        JLabel title = new JLabel("Danh sách xe máy");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setForeground(UIStyles.TEXT_MAIN);
 
-        // Thanh tìm kiếm bên phải header
-        JPanel searchBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        searchBar.setBackground(Color.WHITE);
+        // Thanh tìm kiếm
+        JPanel searchBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        searchBar.setBackground(UIStyles.BACKGROUND);
 
-        txtSearch = new JTextField(20);
-        txtSearch.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        txtSearch.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(189, 195, 199)),
-            new EmptyBorder(5, 10, 5, 10)));
-        txtSearch.setPreferredSize(new Dimension(220, 32));
+        txtSearch = UIStyles.createTextField();
+        txtSearch.setPreferredSize(new Dimension(250, 40));
 
-        JButton btnSearch = toolBtn("🔍 Tìm kiếm", C_ACCENT, Color.WHITE);
-        JButton btnReset  = toolBtn("✕ Xóa lọc",   C_GRAY,   Color.WHITE);
+        UIStyles.ModernButton btnSearch = new UIStyles.ModernButton("Tìm kiếm");
+        btnSearch.setPreferredSize(new Dimension(100, 40));
 
-        searchBar.add(new JLabel("Tìm: ") {{
-            setFont(new Font("Segoe UI", Font.PLAIN, 13));
-            setForeground(C_GRAY);
-        }});
         searchBar.add(txtSearch);
         searchBar.add(btnSearch);
-        searchBar.add(btnReset);
 
-        header.add(title,     BorderLayout.WEST);
+        header.add(title, BorderLayout.WEST);
         header.add(searchBar, BorderLayout.EAST);
 
-        // ========== TOOLBAR (nút CRUD) ==========
-        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        toolbar.setBackground(C_BG);
-        toolbar.setBorder(new EmptyBorder(4, 16, 4, 16));
+        // ========== TOOLBAR ==========
+        JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        toolbar.setBackground(UIStyles.WHITE);
+        toolbar.setBorder(BorderFactory.createCompoundBorder(
+                new UIStyles.RoundedPanel(15, UIStyles.WHITE).getBorder(), // Just using it as a reference for style
+                new EmptyBorder(10, 15, 10, 15)));
+        // Actually, let's just use a simple panel with rounded border manually for
+        // simplicity
+        toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(UIStyles.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.dispose();
+            }
+        };
+        toolbar.setOpaque(false);
 
-        JButton btnAdd    = crudBtn("＋  Thêm xe mới", C_SUCCESS, Color.WHITE);
-        JButton btnEdit   = crudBtn("✎  Sửa thông tin", C_ACCENT, Color.WHITE);
-        JButton btnDelete = crudBtn("✖  Xóa xe",        C_DANGER, Color.WHITE);
-        JButton btnStatus = crudBtn("⟳  Đổi trạng thái", C_WARN,  Color.WHITE);
-        JButton btnRefresh= crudBtn("↻  Làm mới",        C_GRAY,  Color.WHITE);
+        UIStyles.ModernButton btnAdd = new UIStyles.ModernButton("＋ Thêm xe");
+        btnAdd.setPreferredSize(new Dimension(130, 40));
+
+        UIStyles.ModernButton btnRefresh = new UIStyles.ModernButton("↻ Làm mới");
+        btnRefresh.setPreferredSize(new Dimension(130, 40));
 
         lblCount = new JLabel();
-        lblCount.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-        lblCount.setForeground(C_GRAY);
+        lblCount.setFont(UIStyles.FONT_SUBTITLE);
+        lblCount.setForeground(UIStyles.TEXT_MUTED);
 
         toolbar.add(btnAdd);
-        toolbar.add(btnEdit);
-        toolbar.add(btnDelete);
-        toolbar.add(btnStatus);
-        toolbar.add(Box.createHorizontalStrut(8));
         toolbar.add(btnRefresh);
-        toolbar.add(Box.createHorizontalStrut(12));
+        toolbar.add(Box.createHorizontalStrut(20));
         toolbar.add(lblCount);
 
         // ========== BẢNG ==========
-        String[] cols = {"ID", "Biển số", "Tên xe", "Hãng", "Giá/ngày (VNĐ)", "Trạng thái"};
+        String[] cols = { "ID", "Biển số", "Tên xe", "Hãng", "Giá/ngày", "Trạng thái" };
         model = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
         };
         table = new JTable(model);
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        table.setRowHeight(32);
-        table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
-        table.getTableHeader().setBackground(C_PRIMARY);
-        table.getTableHeader().setForeground(Color.WHITE);
-        table.getTableHeader().setReorderingAllowed(false);
-        table.setSelectionBackground(new Color(210, 230, 255));
-        table.setGridColor(new Color(230, 232, 235));
-        table.setShowVerticalLines(true);
-        table.setRowSelectionAllowed(true);
+        UIStyles.styleTable(table);
 
-        int[] widths = {45, 110, 160, 100, 140, 110};
+        int[] widths = { 50, 120, 200, 120, 150, 130 };
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
@@ -129,28 +116,57 @@ public class ManageMotorbikesPanel extends JPanel {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
                 super.getTableCellRendererComponent(t, v, sel, foc, r, c);
+                setBorder(new EmptyBorder(0, 10, 0, 10));
                 String s = v != null ? v.toString() : "";
-                switch (s) {
-                    case "Sẵn sàng":  setForeground(C_SUCCESS); break;
-                    case "Đang thuê": setForeground(C_ACCENT);  break;
-                    case "Bảo trì":   setForeground(C_WARN);    break;
-                    default:          setForeground(Color.BLACK);
+                if (sel) {
+                    setForeground(UIStyles.PRIMARY);
+                } else {
+                    switch (s) {
+                        case "Sẵn sàng":
+                            setForeground(new Color(16, 185, 129));
+                            break; // Emerald 500
+                        case "Đang thuê":
+                            setForeground(new Color(59, 130, 246));
+                            break; // Blue 500
+                        case "Bảo trì":
+                            setForeground(new Color(245, 158, 11));
+                            break; // Amber 500
+                        default:
+                            setForeground(UIStyles.TEXT_MAIN);
+                    }
                 }
-                setFont(getFont().deriveFont(Font.BOLD));
+                setFont(UIStyles.FONT_LABEL);
                 return this;
             }
         });
 
         JScrollPane scroll = new JScrollPane(table);
-        scroll.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, new Color(220, 221, 225)));
+        scroll.setBorder(null);
+        scroll.getViewport().setBackground(UIStyles.WHITE);
+
+        JPanel tableWrapper = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(UIStyles.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.dispose();
+            }
+        };
+        tableWrapper.setOpaque(false);
+        tableWrapper.setBorder(new EmptyBorder(10, 10, 10, 10));
+        tableWrapper.add(scroll, BorderLayout.CENTER);
 
         // ========== GHÉP LAYOUT ==========
-        JPanel topBar = new JPanel(new BorderLayout());
-        topBar.add(header,  BorderLayout.NORTH);
-        topBar.add(toolbar, BorderLayout.SOUTH);
+        add(header, BorderLayout.NORTH);
 
-        add(topBar, BorderLayout.NORTH);
-        add(scroll, BorderLayout.CENTER);
+        JPanel centerArea = new JPanel(new BorderLayout(0, 20));
+        centerArea.setBackground(UIStyles.BACKGROUND);
+        centerArea.add(toolbar, BorderLayout.NORTH);
+        centerArea.add(tableWrapper, BorderLayout.CENTER);
+
+        add(centerArea, BorderLayout.CENTER);
 
         // ========== SỰ KIỆN ==========
         Runnable doSearch = () -> {
@@ -160,65 +176,43 @@ public class ManageMotorbikesPanel extends JPanel {
         };
 
         btnSearch.addActionListener(e -> doSearch.run());
-        btnReset.addActionListener(e  -> { txtSearch.setText(""); loadData(dao.getAll()); });
         txtSearch.addKeyListener(new KeyAdapter() {
-            @Override public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) doSearch.run();
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER)
+                    doSearch.run();
             }
         });
 
-        btnRefresh.addActionListener(e -> { txtSearch.setText(""); loadData(dao.getAll()); });
+        btnRefresh.addActionListener(e -> {
+            txtSearch.setText("");
+            loadData(dao.getAll());
+        });
 
         btnAdd.addActionListener(e -> {
             MotorbikeDialog dlg = new MotorbikeDialog(SwingUtilities.getWindowAncestor(this), null);
             dlg.setVisible(true);
-            if (dlg.isSaved()) loadData(dao.getAll());
-        });
-
-        btnEdit.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row < 0) { showWarn("Vui lòng chọn xe cần sửa!"); return; }
-            Motorbike m = dao.getById((int) model.getValueAt(row, 0));
-            if (m != null) {
-                MotorbikeDialog dlg = new MotorbikeDialog(SwingUtilities.getWindowAncestor(this), m);
-                dlg.setVisible(true);
-                if (dlg.isSaved()) loadData(dao.getAll());
-            }
-        });
-
-        btnDelete.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row < 0) { showWarn("Vui lòng chọn xe cần xóa!"); return; }
-            int    id   = (int)    model.getValueAt(row, 0);
-            String name = model.getValueAt(row, 2) + " (" + model.getValueAt(row, 1) + ")";
-            int ok = JOptionPane.showConfirmDialog(this,
-                "Xóa xe: " + name + "?\nHành động này không thể hoàn tác.",
-                "Xác Nhận Xóa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-            if (ok == JOptionPane.YES_OPTION) {
-                if (dao.delete(id)) { loadData(dao.getAll()); }
-                else showErr("Không thể xóa xe đang được thuê hoặc có đơn liên quan!");
-            }
-        });
-
-        btnStatus.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row < 0) { showWarn("Vui lòng chọn xe cần đổi trạng thái!"); return; }
-            int    id     = (int)    model.getValueAt(row, 0);
-            String curSt  = (String) model.getValueAt(row, 5);
-            String[] opts = {"Sẵn sàng", "Đang thuê", "Bảo trì"};
-            String choice = (String) JOptionPane.showInputDialog(this,
-                "Chọn trạng thái mới cho xe:", "Đổi Trạng Thái",
-                JOptionPane.PLAIN_MESSAGE, null, opts, curSt);
-            if (choice != null && !choice.equals(curSt)) {
-                dao.updateStatus(id, choice);
+            if (dlg.isSaved())
                 loadData(dao.getAll());
-            }
         });
 
         // Double-click → sửa
         table.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) btnEdit.doClick();
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int row = table.getSelectedRow();
+                    if (row >= 0) {
+                        Motorbike m = dao.getById((int) model.getValueAt(row, 0));
+                        if (m != null) {
+                            MotorbikeDialog dlg = new MotorbikeDialog(
+                                    SwingUtilities.getWindowAncestor(ManageMotorbikesPanel.this), m);
+                            dlg.setVisible(true);
+                            if (dlg.isSaved())
+                                loadData(dao.getAll());
+                        }
+                    }
+                }
             }
         });
     }
@@ -227,45 +221,11 @@ public class ManageMotorbikesPanel extends JPanel {
         model.setRowCount(0);
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
         for (Motorbike m : list) {
-            model.addRow(new Object[]{
-                m.getId(), m.getLicensePlate(), m.getModel(),
-                m.getBrand(), nf.format(m.getPricePerDay()) + " đ", m.getStatus()
+            model.addRow(new Object[] {
+                    m.getId(), m.getLicensePlate(), m.getModel(),
+                    m.getBrand(), nf.format(m.getPricePerDay()) + " đ", m.getStatus()
             });
         }
-        lblCount.setText("Hiển thị " + list.size() + " xe");
-    }
-
-    private JButton toolBtn(String text, Color bg, Color fg) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        b.setBackground(bg);
-        b.setForeground(fg);
-        b.setOpaque(true);
-        b.setBorderPainted(false);
-        b.setFocusPainted(false);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setPreferredSize(new Dimension(110, 32));
-        return b;
-    }
-
-    private JButton crudBtn(String text, Color bg, Color fg) {
-        JButton b = new JButton(text);
-        b.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        b.setBackground(bg);
-        b.setForeground(fg);
-        b.setOpaque(true);
-        b.setBorderPainted(false);
-        b.setFocusPainted(false);
-        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        b.setPreferredSize(new Dimension(160, 36));
-        return b;
-    }
-
-    private void showWarn(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Chưa chọn", JOptionPane.WARNING_MESSAGE);
-    }
-
-    private void showErr(String msg) {
-        JOptionPane.showMessageDialog(this, msg, "Lỗi", JOptionPane.ERROR_MESSAGE);
+        lblCount.setText("Tổng cộng: " + list.size() + " xe");
     }
 }

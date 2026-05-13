@@ -4,9 +4,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 
 public class DBConnection {
-    private static final String URL  = "jdbc:mysql://localhost:3306/java_motor_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Ho_Chi_Minh";
+    private static final String URL  = "jdbc:mysql://localhost:3306/java_motor_db";
     private static final String USER = "root";
-    private static final String PASS = "19082173"; // Cập nhật mật khẩu MySQL của bạn
+    private static final String PASS = "luongthanhnhat23";
 
     public static Connection getConnection() {
         try {

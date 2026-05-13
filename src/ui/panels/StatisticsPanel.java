@@ -17,8 +17,8 @@ public class StatisticsPanel extends JPanel {
     private static final Color C_PRIMARY = new Color(44, 62, 80);
 
     private JLabel lblRevenue, lblTotal, lblPending, lblPaid, lblCancelled, lblBikes;
-    private final RentalDAO    rentalDAO = new RentalDAO();
-    private final MotorbikeDAO bikeDAO   = new MotorbikeDAO();
+    private final RentalDAO rentalDAO = new RentalDAO();
+    private final MotorbikeDAO bikeDAO = new MotorbikeDAO();
 
     public StatisticsPanel() {
         setLayout(new BorderLayout(0, 20));
@@ -37,35 +37,35 @@ public class StatisticsPanel extends JPanel {
         JPanel cards = new JPanel(new GridLayout(2, 3, 16, 16));
         cards.setBackground(new Color(245, 247, 250));
 
-        lblRevenue   = createCard(cards, "Tổng Doanh Thu",    new Color(52, 152, 219));
-        lblTotal     = createCard(cards, "Tổng Đơn Thuê",     new Color(155, 89, 182));
-        lblPending   = createCard(cards, "Đang Chờ Xử Lý",   new Color(230, 126, 34));
-        lblPaid      = createCard(cards, "Đã Thanh Toán",     new Color(39, 174, 96));
-        lblCancelled = createCard(cards, "Đã Hủy",            new Color(231, 76, 60));
-        lblBikes     = createCard(cards, "Xe Sẵn Sàng",       new Color(26, 188, 156));
+        lblRevenue = createCard(cards, "Tổng Doanh Thu", new Color(52, 152, 219));
+        lblTotal = createCard(cards, "Tổng Đơn Thuê", new Color(155, 89, 182));
+        lblPending = createCard(cards, "Đang Chờ Xử Lý", new Color(230, 126, 34));
+        lblPaid = createCard(cards, "Đã Thanh Toán", new Color(39, 174, 96));
+        lblCancelled = createCard(cards, "Đã Hủy", new Color(231, 76, 60));
+        lblBikes = createCard(cards, "Xe Sẵn Sàng", new Color(26, 188, 156));
 
         // Bottom bar
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         bottom.setBackground(new Color(245, 247, 250));
         JButton btnRefresh = actionBtn("Làm mới", new Color(52, 152, 219));
-        JButton btnExport  = actionBtn("Xuất báo cáo (.txt)", new Color(39, 174, 96));
+        JButton btnExport = actionBtn("Xuất báo cáo (.txt)", new Color(39, 174, 96));
         bottom.add(btnRefresh);
         bottom.add(btnExport);
 
-        add(title,  BorderLayout.NORTH);
-        add(cards,  BorderLayout.CENTER);
+        add(title, BorderLayout.NORTH);
+        add(cards, BorderLayout.CENTER);
         add(bottom, BorderLayout.SOUTH);
 
         btnRefresh.addActionListener(e -> loadStats());
-        btnExport.addActionListener(e  -> exportReport());
+        btnExport.addActionListener(e -> exportReport());
     }
 
     private JLabel createCard(JPanel parent, String title, Color color) {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 221, 225)),
-            new EmptyBorder(20, 20, 20, 20)));
+                BorderFactory.createLineBorder(new Color(220, 221, 225)),
+                new EmptyBorder(20, 20, 20, 20)));
 
         JPanel top = new JPanel();
         top.setBackground(color);
@@ -105,13 +105,15 @@ public class StatisticsPanel extends JPanel {
     private void exportReport() {
         JFileChooser chooser = new JFileChooser();
         chooser.setSelectedFile(new File("BaoCao_ThuexeMay.txt"));
-        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION) return;
+        if (chooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION)
+            return;
         try (PrintWriter pw = new PrintWriter(new FileWriter(chooser.getSelectedFile()))) {
             NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
             pw.println("========================================");
             pw.println("    BÁO CÁO HỆ THỐNG THUÊ XE MÁY");
             pw.println("========================================");
-            pw.println("Thời gian xuất: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
+            pw.println("Thời gian xuất: "
+                    + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
             pw.println("----------------------------------------");
             pw.println("Tổng doanh thu (đã TT) : " + nf.format(rentalDAO.getTotalRevenue()) + " VNĐ");
             pw.println("Tổng số đơn thuê       : " + rentalDAO.countAll());
@@ -120,9 +122,11 @@ public class StatisticsPanel extends JPanel {
             pw.println("  - Đã hủy              : " + rentalDAO.countByStatus("Đã hủy"));
             pw.println("Xe đang sẵn sàng        : " + bikeDAO.getAvailable().size());
             pw.println("========================================");
-            JOptionPane.showMessageDialog(this, "Xuất báo cáo thành công!\n" + chooser.getSelectedFile().getAbsolutePath());
+            JOptionPane.showMessageDialog(this,
+                    "Xuất báo cáo thành công!\n" + chooser.getSelectedFile().getAbsolutePath());
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Lỗi khi xuất file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Lỗi khi xuất file: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
