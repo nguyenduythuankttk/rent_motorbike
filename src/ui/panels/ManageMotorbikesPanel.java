@@ -105,7 +105,7 @@ public class ManageMotorbikesPanel extends JPanel {
         toolbar.add(lblCount);
 
         // ========== BẢNG ==========
-        String[] cols = { "ID", "Biển số", "Tên xe", "Hãng", "Giá/ngày", "Trạng thái" };
+        String[] cols = { "ID", "Biển số", "Tên xe", "Hãng", "Giá/ngày", "Trạng thái", "Ngày dự kiến trả" };
         model = new DefaultTableModel(cols, 0) {
             @Override
             public boolean isCellEditable(int r, int c) {
@@ -115,7 +115,7 @@ public class ManageMotorbikesPanel extends JPanel {
         table = new JTable(model);
         UIStyles.styleTable(table);
 
-        int[] widths = { 50, 120, 200, 120, 150, 130 };
+        int[] widths = { 50, 120, 200, 120, 150, 130, 150 };
         for (int i = 0; i < widths.length; i++)
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
@@ -123,6 +123,11 @@ public class ManageMotorbikesPanel extends JPanel {
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(SwingConstants.RIGHT);
         table.getColumnModel().getColumn(4).setCellRenderer(right);
+
+        // Căn giữa ngày dự kiến trả
+        DefaultTableCellRenderer center = new DefaultTableCellRenderer();
+        center.setHorizontalAlignment(SwingConstants.CENTER);
+        table.getColumnModel().getColumn(6).setCellRenderer(center);
 
         // Màu cột Trạng thái
         table.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
@@ -275,9 +280,11 @@ public class ManageMotorbikesPanel extends JPanel {
         model.setRowCount(0);
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
         for (Motorbike m : list) {
+            String expectedDate = m.getExpectedReturnDate() != null ? m.getExpectedReturnDate().toString() : "—";
             model.addRow(new Object[] {
                     m.getId(), m.getLicensePlate(), m.getModel(),
-                    m.getBrand(), nf.format(m.getPricePerDay()) + " đ", m.getStatus()
+                    m.getBrand(), nf.format(m.getPricePerDay()) + " đ", m.getStatus(),
+                    expectedDate
             });
         }
         lblCount.setText("Tổng cộng: " + list.size() + " xe");

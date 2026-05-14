@@ -254,8 +254,9 @@ public class RentMotorbikePanel extends JPanel {
             return;
         }
 
-        if (!rentDate.toLocalDate().isAfter(LocalDate.now().minusDays(1))) {
-            // allow today or future
+        if (rentDate.toLocalDate().isBefore(LocalDate.now())) {
+            JOptionPane.showMessageDialog(this, "Ngày nhận xe không được là ngày trong quá khứ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            return;
         }
         long days = (returnDate.getTime() - rentDate.getTime()) / (1000L * 60 * 60 * 24);
         if (days <= 0) {
@@ -290,18 +291,19 @@ public class RentMotorbikePanel extends JPanel {
         r.setReturnDate(returnDate);
         r.setTotalPrice(total);
 
-        if (rentalDAO.add(r)) {
-            bikeDAO.updateStatus(m.getId(), "Đang thuê");
+        if (rentalDAO.addAndLockBike(r)) {
             JOptionPane.showMessageDialog(this,
                     "Đặt xe thành công!\nĐơn #" + m.getModel() + " đang chờ xác nhận.",
                     "Thành công", JOptionPane.INFORMATION_MESSAGE);
             loadMotorbikes();
-            // Reset ngày
             txtRentDate.setText(LocalDate.now().toString());
             txtReturnDate.setText(LocalDate.now().plusDays(1).toString());
             calculateTotal();
         } else {
-            JOptionPane.showMessageDialog(this, "Đặt xe thất bại! Vui lòng thử lại.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Đặt xe thất bại! Xe có thể vừa được đặt bởi người khác. Vui lòng thử lại.",
+                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+            loadMotorbikes();
         }
     }
 

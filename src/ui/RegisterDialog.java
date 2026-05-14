@@ -102,6 +102,14 @@ public class RegisterDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Tên đăng nhập phải có ít nhất 4 ký tự!", "Lỗi", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        if (!username.matches("^[a-zA-Z0-9_]+$")) {
+            JOptionPane.showMessageDialog(this, "Tên đăng nhập chỉ gồm chữ, số và dấu gạch dưới (_)!", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (!phone.isEmpty() && !phone.matches("^0[0-9]{9}$")) {
+            JOptionPane.showMessageDialog(this, "Số điện thoại không hợp lệ! (VD: 0901234567)", "Lỗi", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
         if (!password.equals(confirm)) {
             JOptionPane.showMessageDialog(this, "Mật khẩu nhập lại không khớp!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             return;

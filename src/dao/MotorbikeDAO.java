@@ -11,11 +11,15 @@ public class MotorbikeDAO {
 
     public List<Motorbike> getAll() {
         List<Motorbike> list = new ArrayList<>();
-        String sql = "SELECT * FROM Motorbikes ORDER BY id";
+        String sql = "SELECT m.*, " +
+                "(SELECT r.return_date FROM Rentals r " +
+                " WHERE r.motorbike_id = m.id AND r.status IN ('Đang thuê','Chờ xử lý') " +
+                " ORDER BY r.return_date DESC LIMIT 1) AS expected_return_date " +
+                "FROM Motorbikes m ORDER BY m.id";
         try (Connection conn = DBConnection.getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
-            while (rs.next()) list.add(mapMotorbike(rs));
+            while (rs.next()) list.add(mapMotorbikeWithExpectedDate(rs));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -51,7 +55,11 @@ public class MotorbikeDAO {
 
     public List<Motorbike> search(String keyword) {
         List<Motorbike> list = new ArrayList<>();
-        String sql = "SELECT * FROM Motorbikes WHERE model LIKE ? OR brand LIKE ? OR license_plate LIKE ? ORDER BY id";
+        String sql = "SELECT m.*, " +
+                "(SELECT r.return_date FROM Rentals r " +
+                " WHERE r.motorbike_id = m.id AND r.status IN ('Đang thuê','Chờ xử lý') " +
+                " ORDER BY r.return_date DESC LIMIT 1) AS expected_return_date " +
+                "FROM Motorbikes m WHERE m.model LIKE ? OR m.brand LIKE ? OR m.license_plate LIKE ? ORDER BY m.id";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             String kw = "%" + keyword + "%";
@@ -59,7 +67,7 @@ public class MotorbikeDAO {
             ps.setString(2, kw);
             ps.setString(3, kw);
             ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapMotorbike(rs));
+            while (rs.next()) list.add(mapMotorbikeWithExpectedDate(rs));
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -145,6 +153,12 @@ public class MotorbikeDAO {
         m.setBrand(rs.getString("brand"));
         m.setPricePerDay(rs.getLong("price_per_day"));
         m.setStatus(rs.getString("status"));
+        return m;
+    }
+
+    private Motorbike mapMotorbikeWithExpectedDate(ResultSet rs) throws SQLException {
+        Motorbike m = mapMotorbike(rs);
+        m.setExpectedReturnDate(rs.getDate("expected_return_date"));
         return m;
     }
 }

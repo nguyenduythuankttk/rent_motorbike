@@ -1,5 +1,7 @@
 package model;
 
+import java.sql.Date;
+
 public class Motorbike {
     private int id;
     private String licensePlate;
@@ -7,6 +9,7 @@ public class Motorbike {
     private String brand;
     private long pricePerDay;
     private String status;
+    private Date expectedReturnDate;
 
     public Motorbike() {}
 
@@ -36,6 +39,9 @@ public class Motorbike {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Date getExpectedReturnDate() { return expectedReturnDate; }
+    public void setExpectedReturnDate(Date expectedReturnDate) { this.expectedReturnDate = expectedReturnDate; }
 
     @Override
     public String toString() { return brand + " " + model + " (" + licensePlate + ")"; }

@@ -39,13 +39,17 @@ CREATE TABLE IF NOT EXISTS Rentals (
     id           INT PRIMARY KEY AUTO_INCREMENT,
     user_id      INT,
     motorbike_id INT,
-    rent_date    DATE,
-    return_date  DATE,
-    total_price  DECIMAL(15, 0),
-    status       VARCHAR(20) DEFAULT 'Chờ xử lý',
+    rent_date          DATE,
+    return_date        DATE,
+    actual_return_date DATE NULL,
+    total_price        DECIMAL(15, 0),
+    status             VARCHAR(20) DEFAULT 'Chờ xử lý',
     FOREIGN KEY (user_id)      REFERENCES Users(id),
     FOREIGN KEY (motorbike_id) REFERENCES Motorbikes(id)
 );
+
+-- Thêm cột nếu database đã tồn tại
+ALTER TABLE Rentals ADD COLUMN IF NOT EXISTS actual_return_date DATE NULL AFTER return_date;
 
 -- ----------------------------
 -- Dữ liệu mặc định

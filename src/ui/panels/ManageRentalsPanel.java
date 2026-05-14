@@ -117,9 +117,9 @@ public class ManageRentalsPanel extends JPanel {
         updateButtonState(-1, null);
 
         // ===== BẢNG =====
-        // cột ẩn 8 = motorbike_id, cột ẩn 9 = rent_date gốc (java.sql.Date)
+        // cột ẩn 9 = motorbike_id, cột ẩn 10 = rent_date gốc (java.sql.Date)
         String[] cols = { "ID", "Khách thuê", "Xe", "Biển số",
-                "Ngày nhận", "Ngày trả", "Tổng tiền", "Trạng thái",
+                "Ngày nhận", "Ngày trả dự kiến", "Ngày trả thực tế", "Tổng tiền", "Trạng thái",
                 "bike_id", "rent_date_raw" };
         tableModel = new DefaultTableModel(cols, 0) {
             @Override
@@ -141,7 +141,7 @@ public class ManageRentalsPanel extends JPanel {
         table.setRowSelectionAllowed(true);
 
         // Ẩn 2 cột cuối
-        int[] widths = { 40, 140, 120, 95, 88, 88, 120, 120, 0, 0 };
+        int[] widths = { 40, 140, 120, 95, 88, 110, 110, 120, 120, 0, 0 };
         for (int i = 0; i < widths.length; i++) {
             table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
             if (widths[i] == 0) {
@@ -150,20 +150,22 @@ public class ManageRentalsPanel extends JPanel {
             }
         }
 
-        // Renderer cột ngày (dd/MM/yyyy)
+        // Renderer cột ngày (dd/MM/yyyy), hiển thị "—" nếu null
         DefaultTableCellRenderer dateRenderer = new DefaultTableCellRenderer() {
             private final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
             @Override
             public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int r, int c) {
                 if (v instanceof Date) v = sdf.format((Date) v);
+                else if (v == null) v = "—";
                 return super.getTableCellRendererComponent(t, v, sel, foc, r, c);
             }
         };
         table.getColumnModel().getColumn(4).setCellRenderer(dateRenderer);
         table.getColumnModel().getColumn(5).setCellRenderer(dateRenderer);
+        table.getColumnModel().getColumn(6).setCellRenderer(dateRenderer);
 
         // Renderer cột Trạng thái
-        table.getColumnModel().getColumn(7).setCellRenderer(new DefaultTableCellRenderer() {
+        table.getColumnModel().getColumn(8).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(
                     JTable t, Object v, boolean sel, boolean foc, int r, int c) {
@@ -207,7 +209,7 @@ public class ManageRentalsPanel extends JPanel {
         table.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = table.getSelectedRow();
-                String st = row >= 0 ? (String) tableModel.getValueAt(row, 7) : null;
+                String st = row >= 0 ? (String) tableModel.getValueAt(row, 8) : null;
                 updateButtonState(row, st);
             }
         });
@@ -252,7 +254,7 @@ public class ManageRentalsPanel extends JPanel {
             @Override
             public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
                 int row = table.getSelectedRow();
-                String st = row >= 0 ? (String) tableModel.getValueAt(row, 7) : null;
+                String st = row >= 0 ? (String) tableModel.getValueAt(row, 8) : null;
                 boolean canAct = ST_PENDING.equals(st);
                 miDetail.setEnabled(row >= 0);
                 miConfirm.setEnabled(canAct);
@@ -320,40 +322,114 @@ public class ManageRentalsPanel extends JPanel {
         if (row < 0)
             return;
 
-        int rentalId = (int) tableModel.getValueAt(row, 0);
-        int motorbikeId = (int) tableModel.getValueAt(row, 8);
-        Date rentDate = (Date) tableModel.getValueAt(row, 9);
+        int rentalId    = (int) tableModel.getValueAt(row, 0);
+        int motorbikeId = (int) tableModel.getValueAt(row, 9);
+        Date rentDate   = (Date) tableModel.getValueAt(row, 10);
+
+        LocalDate today = LocalDate.now();
+        String khach = (String) tableModel.getValueAt(row, 1);
+        String model  = (String) tableModel.getValueAt(row, 2);
+        String bienSo = (String) tableModel.getValueAt(row, 3);
+        String xe = model + " (" + bienSo + ")";
+
+        // Tìm pricePerDay từ allData theo rentalId
+        long pricePerDay = allData.stream()
+                .filter(r -> r.getId() == rentalId)
+                .mapToLong(r -> r.getPricePerDay())
+                .findFirst().orElse(0L);
+
+        // Tính số ngày thực tế (tối thiểu 1 ngày)
+        long days = (rentDate != null)
+                ? java.time.temporal.ChronoUnit.DAYS.between(rentDate.toLocalDate(), today)
+                : 1L;
+        if (days <= 0) days = 1;
+        long newTotalPrice = days * pricePerDay;
 
         // Cảnh báo nếu trả trước hạn
-        LocalDate today = LocalDate.now();
         String extraMsg = "";
-        if (rentDate != null && rentDate.toLocalDate().isAfter(today)) {
-            long daysEarly = java.time.temporal.ChronoUnit.DAYS.between(today, rentDate.toLocalDate());
-            extraMsg = "\n⚠ Lưu ý: còn " + daysEarly + " ngày mới đến ngày nhận xe theo hợp đồng.";
+        Date expectedReturn = (Date) tableModel.getValueAt(row, 5);
+        if (expectedReturn != null && expectedReturn.toLocalDate().isAfter(today)) {
+            long daysEarly = java.time.temporal.ChronoUnit.DAYS.between(today, expectedReturn.toLocalDate());
+            extraMsg = "\n⚠ Trả sớm " + daysEarly + " ngày so với hợp đồng.";
         }
 
-        String khach = (String) tableModel.getValueAt(row, 1);
-        String xe = tableModel.getValueAt(row, 2) + " (" + tableModel.getValueAt(row, 3) + ")";
-
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
         int ok = JOptionPane.showConfirmDialog(this,
                 "Xác nhận khách đã trả xe:\n" +
-                        "  Khách : " + khach + "\n" +
-                        "  Xe    : " + xe + "\n" +
-                        "  Đơn # : " + rentalId + extraMsg + "\n\n" +
+                        "  Khách      : " + khach + "\n" +
+                        "  Xe         : " + xe + "\n" +
+                        "  Đơn #      : " + rentalId + extraMsg + "\n" +
+                        "  Ngày trả   : " + new SimpleDateFormat("dd/MM/yyyy").format(Date.valueOf(today)) + "\n" +
+                        "  Số ngày    : " + days + " ngày × " + nf.format(pricePerDay) + " đ\n" +
+                        "  Tổng tiền  : " + nf.format(newTotalPrice) + " đ\n\n" +
                         "Xe sẽ được chuyển về trạng thái Sẵn sàng.",
                 "Xác Nhận Trả Xe", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (ok != JOptionPane.YES_OPTION)
             return;
 
-        if (rentalDAO.updateStatus(rentalId, ST_PAID)) {
-            motorDAO.updateStatus(motorbikeId, "Sẵn sàng");
+        if (rentalDAO.confirmReturn(rentalId, motorbikeId, Date.valueOf(today), newTotalPrice)) {
             loadData();
-            JOptionPane.showMessageDialog(this, "Đã xác nhận trả xe thành công!", "Thành công",
-                    JOptionPane.INFORMATION_MESSAGE);
+            showBillDialog(rentalId, khach, model, bienSo, rentDate, today, days, pricePerDay, newTotalPrice);
         } else {
             JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    // ── Bill hoá đơn ─────────────────────────────────────────────────────────
+    private void showBillDialog(int rentalId, String khach, String model, String bienSo,
+                                Date rentDate, LocalDate returnDate,
+                                long days, long pricePerDay, long totalPrice) {
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+        String sep = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        String bill =
+                sep +
+                "       HOÁ ĐƠN THUÊ XE MÁY\n" +
+                sep +
+                "  Mã đơn      : #" + rentalId + "\n" +
+                "  Ngày in     : " + sdf.format(Date.valueOf(returnDate)) + "\n" +
+                sep +
+                "  Khách hàng  : " + khach + "\n" +
+                "  Xe          : " + model + "\n" +
+                "  Biển số     : " + bienSo + "\n" +
+                sep +
+                "  Ngày thuê   : " + (rentDate != null ? sdf.format(rentDate) : "—") + "\n" +
+                "  Ngày trả    : " + sdf.format(Date.valueOf(returnDate)) + "\n" +
+                "  Số ngày     : " + days + " ngày\n" +
+                "  Giá / ngày  : " + nf.format(pricePerDay) + " đ\n" +
+                sep +
+                "  TỔNG TIỀN   : " + nf.format(totalPrice) + " đ\n" +
+                sep +
+                "   Cảm ơn quý khách đã sử dụng dịch vụ!\n";
+
+        JTextArea ta = new JTextArea(bill);
+        ta.setFont(new Font("Courier New", Font.PLAIN, 13));
+        ta.setEditable(false);
+        ta.setBackground(Color.WHITE);
+        ta.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+
+        JButton btnClose = new JButton("Đóng");
+        btnClose.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnClose.setPreferredSize(new Dimension(100, 34));
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
+        btnPanel.setBackground(Color.WHITE);
+        btnPanel.add(btnClose);
+
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                "Hoá Đơn #" + rentalId, java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(ta, BorderLayout.CENTER);
+        dialog.add(btnPanel, BorderLayout.SOUTH);
+        dialog.getContentPane().setBackground(Color.WHITE);
+        dialog.pack();
+        dialog.setMinimumSize(new Dimension(400, 380));
+        dialog.setLocationRelativeTo(this);
+
+        btnClose.addActionListener(e -> dialog.dispose());
+        dialog.setVisible(true);
     }
 
     // ── Hủy đơn ──────────────────────────────────────────────────────────────
@@ -363,7 +439,7 @@ public class ManageRentalsPanel extends JPanel {
             return;
 
         int rentalId = (int) tableModel.getValueAt(row, 0);
-        int motorbikeId = (int) tableModel.getValueAt(row, 8);
+        int motorbikeId = (int) tableModel.getValueAt(row, 9);
         String khach = (String) tableModel.getValueAt(row, 1);
         String xe = tableModel.getValueAt(row, 2) + " (" + tableModel.getValueAt(row, 3) + ")";
 
@@ -395,24 +471,27 @@ public class ManageRentalsPanel extends JPanel {
             return;
         NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy");
-        String status = (String) tableModel.getValueAt(row, 7);
+        String status = (String) tableModel.getValueAt(row, 8);
         String icon = ST_PAID.equals(status) ? "✔" : ST_CANCEL.equals(status) ? "✖" : "⏳";
 
         Object d4 = tableModel.getValueAt(row, 4);
         Object d5 = tableModel.getValueAt(row, 5);
-        String rentStr   = (d4 instanceof Date) ? sdf.format((Date) d4) : String.valueOf(d4);
-        String returnStr = (d5 instanceof Date) ? sdf.format((Date) d5) : String.valueOf(d5);
+        Object d6 = tableModel.getValueAt(row, 6);
+        String rentStr       = (d4 instanceof Date) ? sdf.format((Date) d4) : String.valueOf(d4);
+        String expectedStr   = (d5 instanceof Date) ? sdf.format((Date) d5) : String.valueOf(d5);
+        String actualStr     = (d6 instanceof Date) ? sdf.format((Date) d6) : "—";
 
         String msg = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
                 "  Đơn thuê #" + tableModel.getValueAt(row, 0) + "\n" +
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n" +
-                "  Khách    : " + tableModel.getValueAt(row, 1) + "\n" +
-                "  Xe       : " + tableModel.getValueAt(row, 2) + "\n" +
-                "  Biển số  : " + tableModel.getValueAt(row, 3) + "\n" +
-                "  Ngày nhận: " + rentStr + "\n" +
-                "  Ngày trả : " + returnStr + "\n" +
-                "  Tổng tiền: " + tableModel.getValueAt(row, 6) + "\n" +
-                "  Trạng thái: " + icon + " " + status + "\n" +
+                "  Khách           : " + tableModel.getValueAt(row, 1) + "\n" +
+                "  Xe              : " + tableModel.getValueAt(row, 2) + "\n" +
+                "  Biển số         : " + tableModel.getValueAt(row, 3) + "\n" +
+                "  Ngày nhận       : " + rentStr + "\n" +
+                "  Ngày trả dự kiến: " + expectedStr + "\n" +
+                "  Ngày trả thực tế: " + actualStr + "\n" +
+                "  Tổng tiền       : " + tableModel.getValueAt(row, 7) + "\n" +
+                "  Trạng thái      : " + icon + " " + status + "\n" +
                 "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
 
         Object[] options;
@@ -449,7 +528,7 @@ public class ManageRentalsPanel extends JPanel {
                 continue;
             tableModel.addRow(new Object[] {
                     r.getId(), r.getFullName(), r.getMotorbikeModel(), r.getLicensePlate(),
-                    r.getRentDate(), r.getReturnDate(),
+                    r.getRentDate(), r.getReturnDate(), r.getActualReturnDate(),
                     nf.format(r.getTotalPrice()) + " đ",
                     r.getStatus(),
                     r.getMotorbikeId(),
