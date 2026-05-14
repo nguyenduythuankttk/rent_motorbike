@@ -1,7 +1,9 @@
 package ui.panels;
 
+import dao.InvoiceDAO;
 import dao.MotorbikeDAO;
 import dao.RentalDAO;
+import model.Invoice;
 import model.Rental;
 
 import javax.swing.*;
@@ -42,12 +44,13 @@ public class ManageRentalsPanel extends JPanel {
     private JLabel lblCount, lblStatus;
 
     // Các nút bị bật/tắt theo logic
-    private JButton btnConfirm, btnCancel, btnDetail;
+    private JButton btnConfirm, btnCancel, btnDetail, btnInvoice;
 
     private List<Rental> allData = new ArrayList<>();
 
     private final RentalDAO rentalDAO = new RentalDAO();
     private final MotorbikeDAO motorDAO = new MotorbikeDAO();
+    private final InvoiceDAO invoiceDAO = new InvoiceDAO();
 
     // ── Constructor ──────────────────────────────────────────────────────────
     public ManageRentalsPanel() {
@@ -94,6 +97,7 @@ public class ManageRentalsPanel extends JPanel {
         btnConfirm = mkBtn("✔  Xác nhận trả xe", C_SUCCESS, Color.WHITE, 170);
         btnCancel = mkBtn("✖  Hủy đơn", C_DANGER, Color.WHITE, 120);
         btnDetail = mkBtn("📋  Xem chi tiết", C_ACCENT, Color.WHITE, 140);
+        btnInvoice = mkBtn("🧾  Xem hóa đơn", new Color(142, 68, 173), Color.WHITE, 145);
         JButton btnRefresh = mkBtn("↻  Làm mới", C_GRAY, Color.WHITE, 110);
 
         lblCount = new JLabel();
@@ -107,6 +111,7 @@ public class ManageRentalsPanel extends JPanel {
         toolbar.add(btnConfirm);
         toolbar.add(btnCancel);
         toolbar.add(btnDetail);
+        toolbar.add(btnInvoice);
         toolbar.add(Box.createHorizontalStrut(6));
         toolbar.add(btnRefresh);
         toolbar.add(Box.createHorizontalStrut(12));
@@ -220,6 +225,7 @@ public class ManageRentalsPanel extends JPanel {
         btnConfirm.addActionListener(e -> handleConfirmReturn());
         btnCancel.addActionListener(e -> handleCancelRental());
         btnDetail.addActionListener(e -> showDetail());
+        btnInvoice.addActionListener(e -> showInvoice());
 
         // Double-click → xem chi tiết
         table.addMouseListener(new MouseAdapter() {
@@ -236,15 +242,17 @@ public class ManageRentalsPanel extends JPanel {
         JPopupMenu menu = new JPopupMenu();
 
         JMenuItem miDetail = new JMenuItem("📋  Xem chi tiết");
+        JMenuItem miInvoice = new JMenuItem("🧾  Xem hóa đơn");
         JMenuItem miConfirm = new JMenuItem("✔  Xác nhận trả xe");
         JMenuItem miCancel = new JMenuItem("✖  Hủy đơn");
         JSeparator sep = new JSeparator();
 
-        for (JMenuItem item : new JMenuItem[] { miDetail, miConfirm, miCancel }) {
+        for (JMenuItem item : new JMenuItem[] { miDetail, miInvoice, miConfirm, miCancel }) {
             item.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         }
 
         menu.add(miDetail);
+        menu.add(miInvoice);
         menu.add(sep);
         menu.add(miConfirm);
         menu.add(miCancel);
@@ -256,10 +264,12 @@ public class ManageRentalsPanel extends JPanel {
                 int row = table.getSelectedRow();
                 String st = row >= 0 ? (String) tableModel.getValueAt(row, 8) : null;
                 boolean canAct = ST_PENDING.equals(st);
+                boolean isPaid = ST_PAID.equals(st);
                 miDetail.setEnabled(row >= 0);
+                miInvoice.setEnabled(isPaid);
                 miConfirm.setEnabled(canAct);
                 miCancel.setEnabled(canAct);
-                // Màu text theo trạng thái
+                miInvoice.setForeground(isPaid ? new Color(142, 68, 173) : C_GRAY);
                 miConfirm.setForeground(canAct ? C_SUCCESS : C_GRAY);
                 miCancel.setForeground(canAct ? C_DANGER : C_GRAY);
             }
@@ -274,6 +284,7 @@ public class ManageRentalsPanel extends JPanel {
         });
 
         miDetail.addActionListener(e -> showDetail());
+        miInvoice.addActionListener(e -> showInvoice());
         miConfirm.addActionListener(e -> handleConfirmReturn());
         miCancel.addActionListener(e -> handleCancelRental());
         return menu;
@@ -283,15 +294,18 @@ public class ManageRentalsPanel extends JPanel {
     private void updateButtonState(int row, String status) {
         boolean rowSelected = row >= 0;
         boolean canChange = ST_PENDING.equals(status);
+        boolean isPaid = ST_PAID.equals(status);
 
         btnConfirm.setEnabled(canChange);
         btnCancel.setEnabled(canChange);
         btnDetail.setEnabled(rowSelected);
+        btnInvoice.setEnabled(isPaid);
 
         // Màu mờ khi disabled
         btnConfirm.setBackground(canChange ? C_SUCCESS : new Color(180, 200, 180));
         btnCancel.setBackground(canChange ? C_DANGER : new Color(200, 180, 180));
         btnDetail.setBackground(rowSelected ? C_ACCENT : new Color(180, 190, 210));
+        btnInvoice.setBackground(isPaid ? new Color(142, 68, 173) : new Color(190, 175, 200));
 
         if (!rowSelected) {
             lblStatus.setText("  ← Chọn một đơn để thao tác");
@@ -303,7 +317,7 @@ public class ManageRentalsPanel extends JPanel {
                     lblStatus.setForeground(C_WARN);
                     break;
                 case ST_PAID:
-                    lblStatus.setText("  Đơn đã hoàn tất — không thể thay đổi");
+                    lblStatus.setText("  Đơn đã hoàn tất — có thể xem hóa đơn");
                     lblStatus.setForeground(C_SUCCESS);
                     break;
                 case ST_CANCEL:
@@ -369,6 +383,7 @@ public class ManageRentalsPanel extends JPanel {
             return;
 
         if (rentalDAO.confirmReturn(rentalId, motorbikeId, Date.valueOf(today), newTotalPrice)) {
+            invoiceDAO.save(rentalId, Date.valueOf(today), (int) days, pricePerDay, newTotalPrice);
             loadData();
             showBillDialog(rentalId, khach, model, bienSo, rentDate, today, days, pricePerDay, newTotalPrice);
         } else {
@@ -420,6 +435,71 @@ public class ManageRentalsPanel extends JPanel {
 
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
                 "Hoá Đơn #" + rentalId, java.awt.Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(ta, BorderLayout.CENTER);
+        dialog.add(btnPanel, BorderLayout.SOUTH);
+        dialog.getContentPane().setBackground(Color.WHITE);
+        dialog.pack();
+        dialog.setMinimumSize(new Dimension(400, 380));
+        dialog.setLocationRelativeTo(this);
+
+        btnClose.addActionListener(e -> dialog.dispose());
+        dialog.setVisible(true);
+    }
+
+    // ── Xem hóa đơn đã lưu ───────────────────────────────────────────────────
+    private void showInvoice() {
+        int row = table.getSelectedRow();
+        if (row < 0) return;
+        int rentalId = (int) tableModel.getValueAt(row, 0);
+
+        Invoice inv = invoiceDAO.getByRentalId(rentalId);
+        if (inv == null) {
+            JOptionPane.showMessageDialog(this,
+                    "Chưa có hóa đơn cho đơn thuê #" + rentalId,
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        NumberFormat nf = NumberFormat.getInstance(new Locale("vi", "VN"));
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String sep = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+        String bill =
+                sep +
+                "       HOÁ ĐƠN THUÊ XE MÁY\n" +
+                sep +
+                "  Mã đơn      : #" + inv.getRentalId() + "\n" +
+                "  Ngày in     : " + sdf.format(inv.getIssuedDate()) + "\n" +
+                sep +
+                "  Khách hàng  : " + inv.getFullName() + "\n" +
+                "  Xe          : " + inv.getMotorbikeModel() + "\n" +
+                "  Biển số     : " + inv.getLicensePlate() + "\n" +
+                sep +
+                "  Ngày thuê   : " + (inv.getRentDate() != null ? sdf.format(inv.getRentDate()) : "—") + "\n" +
+                "  Ngày trả    : " + sdf.format(inv.getIssuedDate()) + "\n" +
+                "  Số ngày     : " + inv.getDays() + " ngày\n" +
+                "  Giá / ngày  : " + nf.format(inv.getPricePerDay()) + " đ\n" +
+                sep +
+                "  TỔNG TIỀN   : " + nf.format(inv.getTotalPrice()) + " đ\n" +
+                sep +
+                "   Cảm ơn quý khách đã sử dụng dịch vụ!\n";
+
+        JTextArea ta = new JTextArea(bill);
+        ta.setFont(new Font("Courier New", Font.PLAIN, 13));
+        ta.setEditable(false);
+        ta.setBackground(Color.WHITE);
+        ta.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+
+        JButton btnClose = new JButton("Đóng");
+        btnClose.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnClose.setPreferredSize(new Dimension(100, 34));
+
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 10));
+        btnPanel.setBackground(Color.WHITE);
+        btnPanel.add(btnClose);
+
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
+                "Hóa Đơn #" + rentalId, java.awt.Dialog.ModalityType.APPLICATION_MODAL);
         dialog.setLayout(new BorderLayout());
         dialog.add(ta, BorderLayout.CENTER);
         dialog.add(btnPanel, BorderLayout.SOUTH);

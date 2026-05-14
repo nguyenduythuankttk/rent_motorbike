@@ -52,6 +52,19 @@ CREATE TABLE IF NOT EXISTS Rentals (
 ALTER TABLE Rentals ADD COLUMN IF NOT EXISTS actual_return_date DATE NULL AFTER return_date;
 
 -- ----------------------------
+-- Bảng Invoices
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS Invoices (
+    id          INT PRIMARY KEY AUTO_INCREMENT,
+    rental_id   INT UNIQUE NOT NULL,
+    issued_date DATE        NOT NULL,
+    days        INT         NOT NULL,
+    price_per_day DECIMAL(12, 0) NOT NULL,
+    total_price   DECIMAL(15, 0) NOT NULL,
+    FOREIGN KEY (rental_id) REFERENCES Rentals(id)
+);
+
+-- ----------------------------
 -- Dữ liệu mặc định
 -- ----------------------------
 INSERT INTO Users (username, password, full_name, phone, role) VALUES
@@ -108,3 +121,21 @@ INSERT INTO Rentals (user_id, motorbike_id, rent_date, return_date, total_price,
 SELECT u.id, m.id, '2026-04-20', '2026-04-22', 380000, 'Đã hủy'
 FROM Users u, Motorbikes m WHERE u.username='vuminhe' AND m.license_plate='59B2-55555'
 ON DUPLICATE KEY UPDATE status = VALUES(status);
+
+-- ----------------------------
+-- Hóa đơn cho các đơn đã thanh toán
+-- ----------------------------
+INSERT INTO Invoices (rental_id, issued_date, days, price_per_day, total_price)
+SELECT r.id,
+       r.return_date,
+       DATEDIFF(r.return_date, r.rent_date),
+       m.price_per_day,
+       r.total_price
+FROM Rentals r
+JOIN Motorbikes m ON r.motorbike_id = m.id
+WHERE r.status = 'Đã thanh toán'
+ON DUPLICATE KEY UPDATE
+    issued_date   = VALUES(issued_date),
+    days          = VALUES(days),
+    price_per_day = VALUES(price_per_day),
+    total_price   = VALUES(total_price);
